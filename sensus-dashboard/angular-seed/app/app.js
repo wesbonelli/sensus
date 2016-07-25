@@ -3,11 +3,12 @@
 angular.module('myApp', [
 	  	'ngRoute',
 		'myApp.LoginPage',
-		'myApp.CreateResearcherPage',
+		'myApp.RegisterResearcherPage',
 		'myApp.StudyLandingPage',
 		'myApp.CreateStudyPage',
-		'myApp.AnotherPage',
-	  	'myApp.version'
+		'myApp.SelectedStudyPage',
+	  	'myApp.RegisterParticipantPage',
+		'myApp.version'
 	])
 .config(['$routeProvider', function($routeProvider) {
   	$routeProvider.otherwise({redirectTo: '/LoginPage'});

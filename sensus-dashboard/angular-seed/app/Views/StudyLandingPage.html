@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html>
 <body>
+	<div class="topright">
+		<input type="submit" value="Log out" data-ng-click="onLogout()" />
+	</div>
 	<h2 class="bodyheader">Studies</h2>
 	<table class="body" style="width:100%">
 		<tr>
@@ -9,10 +12,11 @@
 		<tr>
 			<hr/>
 			<div class="body" ng-repeat="study in studies">
-			<font>{{study.name}}</font>
-    			<input text-align="right" type="submit" value="Select" data-ng-click="onSelect(study)" />
-    			<input text-align="right" type="submit" value="Delete" data-ng-click="onDelete(study)" />
-    			<hr/>
+				<svg ng-style="{'width':'12px', 'height':'12px', 'background':study.color, '-moz-border-radius':'50px', '-webkit-border-radius':'50px', 'border-radius':'50px'}"></svg>
+				<font>{{study.name}}</font>
+    				<input text-align="right" type="submit" value="Select" data-ng-click="onSelect(study)" />
+    				<input text-align="right" type="submit" value="Delete" data-ng-click="onDelete(study)" />
+    				<hr/>
 			</div>
 		</tr>
 		</hr>

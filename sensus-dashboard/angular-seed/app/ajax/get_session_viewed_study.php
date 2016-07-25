@@ -8,9 +8,9 @@ set_error_handler('errorReport');
 // start session
 session_start();
 
-// check if user is logged in
+// check that user is still logged in
 if ($_SESSION["logged_in"] == false) {
-	errorReport(-1, "status:session:expired");
+        errorReport(-1, "status:session:expired");
         exit();
 }
 
@@ -26,19 +26,6 @@ if (!$handle) {
         exit();
 }
 
-// load studies
-$query = "SELECT name, startdate, enddate FROM study";
-$result = pg_query($handle, $query);
-if ($result) {
-	while ($row = pg_fetch_assoc($result))
-		$values[] = $row;
-	$json = json_encode($values);
-	echo $json;
-} else {
-	errorReport(-1, "status:postgresql:queryfailure");
-}
-
-// close connection
-pg_close($handle);
-
+// get session information
+echo "data" . $_SESSION["viewed_study"];
 ?>

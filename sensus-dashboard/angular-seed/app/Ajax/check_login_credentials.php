@@ -1,22 +1,27 @@
 <?php
-// only allow access from dashboard
-header('Access-Control-Allow-Origin: http://ec2-107-22-158-28.compute-1.amazonaws.com/sensus_dashboard/*');
 
-// need to do this in order for the script to run... not sure why
+header('Access-Control-Allow-Origin: http://ec2-54-227-229-48.compute-1.amazonaws.com/app/*');
 ini_set('display_errors', 1);
+include('app.php');
+set_error_handler('errorReport');
 
-// set up and check connection
-$handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = postgres password = sensus_dev");
+// get database password
+$text = file_get_contents('/pgsql-roles/pgsql_roles.json');
+$json = json_decode($text, true);
+$pgsqlPassword = $json['ajax']['pw'];
+
+// connect to database
+$handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-        echo 'Connection failed.';
+        errorReport(-1, "status:postgresql:connectionfailure");
         exit();
 }
 
-// check POST values
+// check and set POST values
 $loginEmailAddress;
 $loginPassword;
 if (empty($_POST['loginEmailAddress']) || empty($_POST['loginPassword']))
-        echo "Incomplete form";
+        errorReport(-1, "status:ajax:incompleteform");
 if(!get_magic_quotes_gpc()) {
         $loginEmailAddress = addslashes($_POST['loginEmailAddress']);
         $loginPassword = addslashes($_POST['loginPassword']);
@@ -26,20 +31,31 @@ if(!get_magic_quotes_gpc()) {
 }
 
 // build query
-$query = "SELECT FROM researcher WHERE emailaddress = '$loginEmailAddress' AND password = '$loginPassword';";
+$query = "SELECT password FROM researcher WHERE emailaddress = '$loginEmailAddress';";
 
-// check credentials
+// execute query
 $result = pg_query($handle, $query);
+
+// check return value
 if ($result) {
+	// if no rows were returned, email was incorrect
 	if (pg_num_rows($result) == 0)
-                echo "null";
+                echo "authenticate:fail";
+	// if a row was returned, check password
         else {
-        	echo "pass";
+		$rowArray = pg_fetch_array($result, 0, PGSQL_NUM);
+		if (password_verify($loginPassword, $rowArray[0])) {
+			echo "authenticate:pass";
+		}
+		else {
+			echo "authenticate:fail";
+		}
 	}
 } else {
-        echo "Query failed";
+        errorReport(-1, "status:postgresql:queryfailure");
 }
 
 // close connection
 pg_close($handle);
+
 ?>

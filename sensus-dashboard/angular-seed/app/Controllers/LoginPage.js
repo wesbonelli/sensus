@@ -10,33 +10,40 @@ angular.module('myApp.LoginPage', ['ngRoute'])
 }])
 
 .controller('LoginPageCtrl', function($scope, $http, $location, $route) {
+	// input fields
 	$scope.formData = {};
 	
+	// authenticate and, if valid, update session and switch to StudyLandingPage
 	$scope.onLogin = function() {
-                // TODO check login credentials against database using http://ec2-107-22-158-28.compute-1.amazonaws.com/ajax/check_login_credentials.php
                 $http({
                         method  : 'POST',
-                        url     : 'http://ec2-107-22-158-28.compute-1.amazonaws.com/ajax/check_login_credentials.php',
+                        url     : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/check_login_credentials.php',
                         data    : $.param($scope.formData),
                         headers : { 'Content-type': 'application/x-www-form-urlencoded' },
                 }).success(function(data) {
-			if (data != 'null') {
-           			$location.path('/StudyLandingPage');
-           		} else {
+			if (data == 'authenticate:pass') {
+				$http({
+                        		method : 'GET',
+                        		url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/update_session_login_status.php',
+                        		dataType : "json",
+                        		context : document.body
+                		}).success(function(data) {
+					if (data == '') {
+						$location.path('/StudyLandingPage');
+					} else {
+						alert(data);
+					}
+                		});
+           		} else if (data == 'authenticate:fail') {
 				alert("Bad email address or password");
-			}                	
+			} else {
+				alert(data);
+			}
                 });
-		//$http({
-                //        method  : 'POST',
-                //        url     : 'http://ec2-107-22-158-28.compute-1.amazonaws.com/ajax/update_user_status.php',
-                //        data    : $.param($scope.formData),
-                //        headers : { 'Content-type': 'application/x-www-form-urlencoded' },
-                //}).success(function(data) {
-                //	  $location.path('/StudyLandingPage');
-                //});
         };
 
-	$scope.onCreate = function() {
-		$location.path('/CreateResearcherPage');
+	// switch to RegisterResearcherPage
+	$scope.onRegister = function() {
+		$location.path('/RegisterResearcherPage');
 	}
 });

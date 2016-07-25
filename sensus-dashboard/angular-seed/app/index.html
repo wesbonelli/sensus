@@ -12,16 +12,21 @@
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
   <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.0/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/resources/demos/style.css">
   <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
 </head>
 <body>
 	<h1 class="header">Sensus Dashboard</h1>
 	
+	<!--
 	<a href="#/LoginPage">Login Page</a>
-	<a href="#/CreateResearcherPage">Create Researcher Account Page</a>
+	<a href="#/RegisterResearcherPage">Register Researcher Account Page</a>
 	<a href="#/StudyLandingPage">Study Landing Page</a>
 	<a href="#/CreateStudyPage">Create Study Page</a>
-	<a href="#/AnotherPage">Another Page</a>
+	<a href="#/SelectedStudyPage">Selected Study Page</a>
+	<a href="#/RegisterParticipantPage">Register Participant Page</a>
+	-->
 
  	<!--[if lt IE 7]>
       	<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
@@ -29,22 +34,22 @@
   	
   	<div ng-view></div>
 
-  	<!-- In production use:
-  	<script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
-  	-->
-  	<script src="bower_components/angular/angular.js"></script>
+  	<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+        <script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+  	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.7/angular.min.js"></script>
+  	<!--<script src="bower_components/angular/angular.js"></script>-->
   	<script src="bower_components/angular-route/angular-route.js"></script>
   	<script src="bower_components/d3/d3.js"></script>
-  	<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
-  	<script src="bower_components/jquery/src/ajax.js"></script>
+	<script src="bower_components/jquery/src/ajax.js"></script>
   	<script src="app.js"></script>
 	<script src="Controllers/LoginPage.js"></script>
-	<script src="Controllers/CreateResearcherPage.js"></script>
+	<script src="Controllers/RegisterResearcherPage.js"></script>
 	<script src="Controllers/StudyLandingPage.js"></script>
 	<script src="Controllers/CreateStudyPage.js"></script>
- 	<script src="Controllers/AnotherPage.js"></script>
+ 	<script src="Controllers/SelectedStudyPage.js"></script>
+	<script src="Controllers/RegisterParticipantPage.js"></script>
   	<script src="components/version/version.js"></script>
   	<script src="components/version/version-directive.js"></script>
   	<script src="components/version/interpolate-filter.js"></script>
 </body>
-</html>
+</html

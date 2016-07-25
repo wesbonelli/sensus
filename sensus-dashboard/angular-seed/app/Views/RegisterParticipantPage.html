@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+        <h2 class="bodyheader">Register Participant</h2>
+
+        <table class="body">
+                <colgroup>
+                        <col>
+                        <col>
+                </colgroup>
+                <tr>
+                        <form id="participant">
+                                <fieldset  class="body">
+                                        <input name="participantEmailAddress" type="text" placeholder="Email Address" size="50" ng-model="formData.participantEmailAddress"><br>
+                                        <input name="participantStartDate" type="text" placeholder="Start Date" size="50" ng-model="formData.participantStartDate" jqdatepicker><br>
+                                        <input name="participantEndDate" type="text" placeholder="End Date" size="50" ng-model="formData.participantEndDate" jqdatepicker><br>
+                                        <label><input name="participantAnonymize" type="checkbox" value="anonymize" placeholder="Anonymize" size="50" ng-model="formData.participantAnonymize"> Anonymize</label><br>
+                                        <p>
+                                        <label text-align="center"></label><input class="body" type="submit" value="Register" data-ng-click="onRegister()"/>
+                                        <label text-align="center"></label><input class="body" type="submit" value="Cancel" data-ng-click="onCancel()"/>
+                                </fieldset>
+                        </form>
+
+                </tr>
+        </table>
+</body>
+</html>
