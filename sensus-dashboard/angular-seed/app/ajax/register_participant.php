@@ -5,6 +5,18 @@ ini_set('display_errors', 1);
 include('app.php');
 set_error_handler('errorReport');
 
+// start session
+session_start();
+
+// check if user is logged in
+if ($_SESSION["logged_in"] == false) {
+        errorReport(-1, "status:session:expired");
+        exit();
+}
+
+// get session data
+$participantStudyName = $_SESSION["viewed_study"];
+
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
 $json = json_decode($text, true);
@@ -47,11 +59,15 @@ if (!empty($_POST['participantAnonymize'])) {
 	}
 }
 
+
+
 // build query
-$query = "INSERT INTO participant (emailaddress, startdate, enddate) VALUES ('$participantEmailAddress', '$participantStartDate', '$participantEndDate');";
+$query = "INSERT INTO participant (emailaddress, startdate, enddate, studyname) VALUES ('$participantEmailAddress', '$participantStartDate', '$participantEndDate', '$participantStudyName');";
 
 // execute query
 $result = pg_query($handle, $query);
 if (!$result) {
         errorReport(-1, "status:postgresql:queryfailure");
 }
+
+?>

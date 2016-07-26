@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<body>
+        <ul class="headersection">
+                <li text-align="left"><input type="submit" value="Back" data-ng-click="onBack()"/></li>
+		<li style="float:right">{{studyName}}</li>
+                <li style="float:right"><input type="submit" value="Logout" data-ng-click="onLogout()" /></li>
+                <li style="float:right">{{userEmailAddress}}</li>
+        </ul>
+
+	<div class="section" style="float:left; width:60%;">
+        	<ul>
+                	<li><h3>Overview</h3></li>
+			<li style="float:right"><input type="submit" value="Edit" data-ng-click="onEditOverview()" /></li>
+			<li>Start date: {{studyStartDate}}</li>
+			<br/>
+			<li>End date: {{studyEndDate}}</li>
+                	<br/>
+			<li>Description: {{studyDescription}}</li>
+        	</ul>
+		
+		<br/>
+                <br/>
+
+		<ul>
+                        <li><h3>Researchers</h3></li>
+                        <li style="float:right"><input type="submit" value="Edit" data-ng-click="onEditResearchers()" /></li>
+                	<li><br/><hr/></li>
+		</ul>
+                <table style="width:100%">
+                        {{researchers.message}}
+                        <tr>
+                                <div ng-repeat="researcher in researchers | orderBy:'emailaddress'">
+                                        <ul>
+                                                <li><hr/></li>
+                                                <li>{{researcher.firstname}} {{researcher.lastname}}</li>
+						<li>{{researcher.emailaddress}}</li>
+                                        </ul<>
+                                </div>
+                        </tr>
+                        </hr>
+                </table>
+
+		<br/>
+                <br/>
+
+		<ul>
+                        <li><h3>Goals</h3></li>
+			<li style="float:right"><input type="submit" value="Edit" data-ng-click="onEditGoals()" /></li>
+			<li><br/><hr/></li>
+                </ul>
+
+		<br/>
+                <br/>
+
+		<ul>
+                	<li><h3>Hypotheses</h3></li>
+			<li style="float:right"><input type="submit" value="Edit" data-ng-click="onEditHypotheses()" /></li>
+			<li><br/><hr/></li>
+        	</ul>
+
+		<br/>
+		<br/>
+
+		<ul>
+                        <li><h3>Participants</h3></li>
+                        <li style="float:right"><input type="submit" value="Edit" data-ng-click="onEditParticipants()" /></li>
+                	<li>Active:</li>
+                        <br/>
+                        <li>Inactive:</li>
+                        <br/>
+                        <li>Total: {{filtered.length}}</li>
+			<li><br/><hr/></li>
+		</ul>
+                <table style="width:100%">
+                        {{participants.message}}
+			<div ng-repeat="participant in participants | filter:query as filtered">
+</div>
+                        <tr>
+                                <div ng-repeat="participant in participants | orderBy:'enddate'">
+                                        <ul>
+                                                <li><svg ng-style="{'width':'12px', 'height':'12px', 'background':study.color, '-moz-border-radius':'20px', '-webkit-border-radius':'20px', 'border-radius':'20px'}"></svg></li>
+                                                <li>{{participant.id}}</li>
+                                                <li style="float:right"><input type="submit" value="View" data-ng-click="onViewParticipant(participant)" /></li>
+                                        </ul<>
+                                </div>
+                        </tr>
+                </table>
+        </div>
+        <div class="section" style="float:right; width:30%;">
+                <ul>
+                        <li><h3>Event Log</h3></li>
+                        <li style="float:right"><input type="submit" value="View All" data-ng-click="onViewAllAlerts()" /></li>
+                </ul>
+		<hr/>
+                <table style="width:100%">
+                        <tr>
+                                {{alerts.message}}
+                        </tr>
+                        <tr>
+                                <div ng-repeat="alert in alerts | orderBy:'timestamp'">
+                                        {{alert.timestamp}}
+                                        </br>
+                                        {{alert.sourcestudyname}}
+                                        </br>
+                                        {{alert.sourceparticipantemailaddress}}
+                                        </br>
+                                        <input type="submit" value="View" data-ng-click="onViewAlert(alert)" />
+                                </div>
+                        </tr>
+                </table>
+        </div>
+</body>
+</html>

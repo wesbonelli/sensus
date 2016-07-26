@@ -1,55 +1,111 @@
 /***** text styles *****/
 
-.label {
-	display:inline-block
-	text-align:center
+.section {
+	margin: 10px 10px 10px 10px;
+	padding: 5px 10px 10px 5px;
 }
 
-.header {
+.label {
+	display: inline-block;
+	text-align: center;
+}
+
+.pageheader {
+	display:block;
+	padding: 0 15px 0 15px
+}
+
+.headersection {
+	padding: 0px 15px 0px 15px;
 	border-bottom: 0.05em solid black;
-	padding: 0px 0px 0px 10px;
+}
+
+.leftheader {
+	text-align: left;
+	margin-right:10px;
+}
+
+.rightheader {
+	text-align: right;
+        margin-left:10px;
+}
+
+.leftinline {
+	text-align: left;
+        display: inline;
+}
+
+.rightinline {
+        text-align: right;
+        display: inline;
 }
 
 .bodyheader {
 	text-align: center;
 }
 
-.menu {
-  	list-style: none;
-  	padding: 0 0 0 0;
+.leftbodyheader {
+	padding: 20px;
+	text-align: left;
+	width: 50%;
 }
 
-.menu li {
-	display: inline;
+.rightbodyheader {
+        padding: 20px;
+        text-align: right;
+	width: 50%;
 }
 
 .body {
 	text-align: center;
 }
 
-.topright {
-	padding: 5px;
-	text-align: right;
+.leftbody {
+	text-align: left;
+	padding: 20px;
 }
 
-.button {
-	padding: 5px;
-	text-align: center;
+.rightbody {
+	text-align: right;
+	padding: 20px;
+}
+
+ul {
+	list-style-type: none;
+    	margin: 0;
+    	padding: 0;
+    	overflow: hidden;
+}
+
+li {
+	display: inline;
 }
 
 /***** input styles *****/
 
 input[type=text] {
-	padding: 5px;
+	margin: 2px 2px 2px 2px;
+	padding: 2px 2px 2px 2px;
 }
 
 input[type=password] {
-	padding: 5px;
+	margin: 2px 2px 2px 2px;
+	padding: 2px 2px 2px;
 }
 
 input[type=checkbox] {
-        padding: 5px;
+	margin: 2px 2px 2px 2px;
+        padding: 2px 2px 2px 2px;
+}
+
+input[type=submit] {
+	margin: 2px 2px 2px 2px;
 }
 
 /***** shapes *****/
+
+
+
+/***** layout *****/
+
 

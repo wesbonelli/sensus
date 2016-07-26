@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html>
 <body>
+        <ul class="headersection">
+                <li text-align="left"><input type="submit" value="Cancel" data-ng-click="onCancel()"/></li>
+                <li style="float:right"><input type="submit" value="Logout" data-ng-click="onLogout()" /></li>
+                <li style="float:right">{{userEmailAddress}}</li>
+        </ul>
+	
         <h2 class="bodyheader">Register Participant</h2>
 
         <table class="body">
@@ -17,7 +23,6 @@
                                         <label><input name="participantAnonymize" type="checkbox" value="anonymize" placeholder="Anonymize" size="50" ng-model="formData.participantAnonymize"> Anonymize</label><br>
                                         <p>
                                         <label text-align="center"></label><input class="body" type="submit" value="Register" data-ng-click="onRegister()"/>
-                                        <label text-align="center"></label><input class="body" type="submit" value="Cancel" data-ng-click="onCancel()"/>
                                 </fieldset>
                         </form>
 

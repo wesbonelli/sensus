@@ -14,6 +14,9 @@ if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
+// update session
+$_SESSION["viewed_study"] = '';
+
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
 $json = json_decode($text, true);

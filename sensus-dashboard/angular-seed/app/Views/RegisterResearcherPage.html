@@ -1,7 +1,12 @@
 <!DOCTYPE html>
 <html>
 <body>
-        <h2 class="bodyheader">Register Researcher Account</h2>
+	<ul class="headersection">
+                <li><h3 class="bodyheader">Register Account</h3></li>
+                <li><input type="submit" value="Cancel" data-ng-click="onCancel()"/></li>
+        </ul>
+
+	<br/>
 
         <table class="body">
                 <colgroup>
@@ -17,7 +22,6 @@
 					<input name="researcherPassword" type="text" placeholder="Password" size="50" ng-model="formData.researcherPassword"><br>
                                         <p>
                                         <label text-align="center"></label><input class="body" type="submit" value="Register" data-ng-click="onRegister()"/>
-                                        <label text-align="center"></label><input class="body" type="submit" value="Cancel" data-ng-click="onCancel()"/>
                                 </fieldset>
                         </form>
 

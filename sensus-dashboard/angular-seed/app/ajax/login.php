@@ -20,8 +20,10 @@ if (!$handle) {
 // check and set POST values
 $loginEmailAddress;
 $loginPassword;
-if (empty($_POST['loginEmailAddress']) || empty($_POST['loginPassword']))
+if (empty($_POST['loginEmailAddress']) || empty($_POST['loginPassword'])) {
         errorReport(-1, "status:ajax:incompleteform");
+	exit();
+}
 if(!get_magic_quotes_gpc()) {
         $loginEmailAddress = addslashes($_POST['loginEmailAddress']);
         $loginPassword = addslashes($_POST['loginPassword']);
@@ -49,11 +51,22 @@ if ($result) {
 		}
 		else {
 			echo "authenticate:fail";
+			exit();
 		}
 	}
 } else {
         errorReport(-1, "status:postgresql:queryfailure");
+	exit();
 }
+
+// start session
+session_start();
+
+// update session
+$_SESSION["logged_in"] = true;
+$_SESSION["user_email_address"] = $loginEmailAddress;
+$_SESSION["viewed_study"] = '';
+$_SESSION["viewed_participant"] = '';
 
 // close connection
 pg_close($handle);

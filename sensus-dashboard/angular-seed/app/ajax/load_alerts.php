@@ -14,8 +14,9 @@ if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
-// update session
-$_SESSION["viewed_participant"] = '';
+// get session information
+$studyName = $_SESSION["viewed_study"];
+$participantEmailAddress = $_SESSION["viewed_participant"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -29,8 +30,16 @@ if (!$handle) {
         exit();
 }
 
-// load participant
-$query = "SELECT emailaddress, startdate, enddate FROM participant";
+// load alerts
+if ($studyName == '' && $participantEmailAddress == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM alert;";
+} else if ($studyName == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM alert WHERE sourceparticipantemailaddress = '$participantEmailAddress';";
+} else if ($participantEmailAddress == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM alert WHERE sourcestudyname = '$studyName';";
+} else {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM alert WHERE sourcestudyname = '$stuyName' AND sourceparticipantemailaddress = '$participantEmailAddress';";
+}
 $result = pg_query($handle, $query);
 if ($result) {
         while ($row = pg_fetch_assoc($result))

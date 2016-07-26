@@ -8,7 +8,12 @@ set_error_handler('errorReport');
 // start session
 session_start();
 
-// update session
-$_SESSION["logged_in"] = true;
+// check if user is logged in and return information if so
+if ($_SESSION["logged_in"] == false) {
+        errorReport(-1, "status:session:expired");
+        exit();
+} else {
+	echo "data" . $_SESSION["user_email_address"];
+}
 
 ?>

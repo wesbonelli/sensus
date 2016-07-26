@@ -10,12 +10,27 @@ angular.module('myApp.StudyLandingPage', ['ngRoute'])
 }])
 
 .controller('StudyLandingPageCtrl', function($scope, $http, $location, $route) {
-	// list studies
+	
+	$scope.userEmailAddress = '';
 	$scope.studies = [];
-	$scope.message = '';
+	$scope.studiesMessage = '';
+	$scope.alerts = [];
+	$scope.alertsMessage = '';
 
-	// query database for studies when page loads
+	// get current user, then query database for studies and alerts when page loads
 	$(document).ready(function() {
+		$http({
+                        method : 'GET',
+                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/get_session_login_status.php',
+                        dataType : "json",
+                        context : document.body
+                }).success(function(data) {
+                        if (data != null && !data.toString().contains("status")) {
+                                $scope.userEmailAddress = data.toString().replace("data", "");
+                        } else {
+                                alert(data.toString());
+                        }
+                });
 		$http({
 			method : 'GET',
 			url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_studies.php',
@@ -23,19 +38,46 @@ angular.module('myApp.StudyLandingPage', ['ngRoute'])
 			context : document.body
 		}).success(function(data) {
 			if (data.indexOf('br') > -1) {
-				$scope.message = 'No studies found.';
+				$scope.studiesMessage = 'No studies found.';
 			}
 			else if (data != null && !data.toString().contains("status")) {
 				for (var i = 0; i < data.length; i += 1) {
+					var startDate = Date.parse(data[i].startdate.toString().split("+")[0]);
+					var endDate = Date.parse(data[i].enddate.toString().split("+")[0])
 					$scope.studies.push({
 						name : data[i].name,
-						color : (Date.parse(data[i].startdate.toString().split("+")[0]) < Date.now() && Date.parse(data[i].enddate.toString().split("+")[0]) > Date.now()) ? 'green' : 'red'
+						startdate : startDate,
+						enddate : endDate,
+						color : startDate < Date.now() && endDate > Date.now() ? 'green' : 'red'
 					});
 				}
 			} else {
 				alert(data.toString());
 			}
 		});
+		$http({
+                        method : 'GET',
+                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_alerts.php',
+                        dataType : "json",
+                        context : document.body
+                }).success(function(data) {
+                        if (data.indexOf('br') > -1) {
+                                $scope.alertsMessage = 'No alerts found.';
+                        }
+                        else if (data != null && !data.toString().contains("status")) {
+			        for (var i = 0; i < data.length; i += 1) {
+                                        var timeStamp = Date.parse(data[i].timestamp.toString().split("+")[0]);
+                                        $scope.alerts.push({
+                                                sourcestudyname : data[i].sourcestudyname,
+						sourceparticipantemailaddress : data[i].sourceparticipantemailaddress,
+                                                timestamp : timeStamp.toString(),
+                                                message : data[i].message,
+                                        });
+                                }
+                        } else {
+                                alert(data.toString());
+                        }
+                });
 	});
 
 	// end session and switch to LoginPage
@@ -56,7 +98,7 @@ angular.module('myApp.StudyLandingPage', ['ngRoute'])
 	}
 
 	// update session and switch to SelectedStudyPage
-	$scope.onSelect = function(study) {
+	$scope.onViewStudy = function(study) {
 		var data = '';
                 data += 'studyName=' + study.name;
                 $http({
@@ -74,7 +116,7 @@ angular.module('myApp.StudyLandingPage', ['ngRoute'])
 	};
 
 	// delete study from database and reload page
-	$scope.onDelete = function(study) {
+	$scope.onDeleteStudy = function(study) {
 		var data = '';
                 data += 'studyName=' + study.name;
                 $http({
@@ -90,6 +132,24 @@ angular.module('myApp.StudyLandingPage', ['ngRoute'])
 			}
                 });
 	};
+
+	// update session and switch to SelectedAlertPage
+	$scope.onViewAlert = function(alert) {
+                var data = '';
+                data += 'alertTimestamp=' + alert.timestamp;
+                $http({
+                        method  : 'POST',
+                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/update_session_viewed_alert.php',
+                        data    : data,
+                        headers : { 'Content-type': 'application/x-www-form-urlencoded' },
+                }).success(function(data) {
+                        if (data == '') {
+                                $location.path('/SelectedAlertPage');
+                        } else {
+                                alert(data);
+                        }
+                });
+        };
 
 	// switch to CreateStudyPage
 	$scope.onCreate = function() {

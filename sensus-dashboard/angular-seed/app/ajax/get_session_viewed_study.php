@@ -8,7 +8,7 @@ set_error_handler('errorReport');
 // start session
 session_start();
 
-// check that user is still logged in
+// check if user is logged in
 if ($_SESSION["logged_in"] == false) {
         errorReport(-1, "status:session:expired");
         exit();
@@ -28,4 +28,5 @@ if (!$handle) {
 
 // get session information
 echo "data" . $_SESSION["viewed_study"];
+
 ?>
