@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<!--[if lt IE 7]>      <html lang="en" ng-app="SensusDashboard" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html lang="en" ng-app="SensusDashboard" class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html lang="en" ng-app="SensusDashboard" class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html lang="en" ng-app="myApp" class="no-js"> <!--<![endif]-->
+<!--[if lt IE 7]>      <html lang="en" ng-app="SensusPortal" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="SensusPortal" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="SensusPortal" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html lang="en" ng-app="SensusPortal" class="no-js"> <!--<![endif]-->
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>Sensus Dashboard</title>
+  <title>Sensus Portal</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
@@ -18,18 +18,9 @@
 </head>
 <body>
 	<div class="pageheader">
-		<h2>Sensus Dashboard</h2>
+		<h2>Sensus Portal</h2>
 	</div>
 	
-	<!--
-	<a href="#/LoginPage">Login Page</a>
-	<a href="#/RegisterResearcherPage">Register Researcher Account Page</a>
-	<a href="#/StudyLandingPage">Study Landing Page</a>
-	<a href="#/CreateStudyPage">Create Study Page</a>
-	<a href="#/SelectedStudyPage">Selected Study Page</a>
-	<a href="#/RegisterParticipantPage">Register Participant Page</a>
-	-->
-
  	<!--[if lt IE 7]>
       	<p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
   	<![endif]-->
@@ -46,10 +37,12 @@
   	<script src="app.js"></script>
 	<script src="Controllers/LoginPage.js"></script>
 	<script src="Controllers/RegisterResearcherPage.js"></script>
-	<script src="Controllers/StudyLandingPage.js"></script>
+	<script src="Controllers/StudiesPage.js"></script>
 	<script src="Controllers/CreateStudyPage.js"></script>
- 	<script src="Controllers/SelectedStudyPage.js"></script>
-	<script src="Controllers/RegisterParticipantPage.js"></script>
+ 	<script src="Controllers/StudyPage.js"></script>
+	<script src="Controllers/StudyDetailsPage.js"></script>
+	<script src="Controllers/ParticipantPage.js"></script>
+	<script src="Controllers/EditParticipantsPage.js"></script>
   	<script src="components/version/version.js"></script>
   	<script src="components/version/version-directive.js"></script>
   	<script src="components/version/interpolate-filter.js"></script>

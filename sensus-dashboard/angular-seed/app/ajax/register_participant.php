@@ -9,8 +9,14 @@ set_error_handler('errorReport');
 session_start();
 
 // check if user is logged in
-if ($_SESSION["logged_in"] == false) {
-        errorReport(-1, "status:session:expired");
+if (!isset($_SESSION["logged_in"])) {
+        $error = array('type' => 'session', 'message' => 'doesnotexist');
+        errorReport(-1, json_encode(array('error' => $error)));
+        exit();
+}
+else if ($_SESSION["logged_in"] == false) {
+        $error = array('type' => 'session', 'message' => 'expired');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -25,7 +31,8 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-        errorReport(-1, "status:postgresql:connectionfailure");
+	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -35,7 +42,8 @@ $participantStartDate;
 $participantEndDate;
 $participantAnonymize;
 if (empty($_POST['participantStartDate']))
-        errorReport(-1, "status:ajax:incompleteform");
+	$error = array('type' => 'ajax', 'message' => 'missingvalues');
+        errorReport(-1, json_encode(array('error' => $error)));
 if(!get_magic_quotes_gpc()) {
 	$participantEmailAddress = addslashes($_POST['participantEmailAddress']);
         $participantStartDate = addslashes($_POST['participantStartDate']);
@@ -67,7 +75,8 @@ $query = "INSERT INTO participant (emailaddress, startdate, enddate, studyname) 
 // execute query
 $result = pg_query($handle, $query);
 if (!$result) {
-        errorReport(-1, "status:postgresql:queryfailure");
+	$error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
 }
 
 ?>

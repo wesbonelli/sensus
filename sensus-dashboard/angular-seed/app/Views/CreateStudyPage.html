@@ -2,9 +2,9 @@
 <html>
 <body>
         <ul class="headersection">
-                <li text-align="left"><input type="submit" value="Cancel" data-ng-click="onCancel()"/></li>
-                <li style="float:right"><input type="submit" value="Logout" data-ng-click="onLogout()" /></li>
-                <li style="float:right">{{userEmailAddress}}</li>
+                <li text-align="left"><input type="submit" value="Back" data-ng-click="back()"/></li>
+                <li style="float:right"><input type="submit" value="Logout" data-ng-click="logout()" /></li>
+                <li style="float:right">{{user.emailAddress}}</li>
         </ul>
 	
 	<h3 class="bodyheader">Create New Study</h3>
@@ -20,8 +20,9 @@
 					<input name="studyName" type="text" placeholder="Study Name" size="50" ng-model="formData.studyName"><br>
 					<input name="studyStartDate" type="text" placeholder="Study Start Date" size="50" ng-model="formData.studyStartDate" jqdatepicker><br>
 					<input name="studyEndDate" type="text" placeholder="Study End Date (optional)" size="50" ng-model="formData.studyEndDate" jqdatepicker><br>
+					<textarea name="studyDescription" cols="40" rows="5" placeholder="Study Description" ng-model="formData.studyDescription"></textarea>
 					<p>
-					<label text-align="center"></label><input class="body" type="submit" value="Create" data-ng-click="onCreate()"/>
+					<label text-align="center"></label><input class="body" type="submit" value="Create" data-ng-click="createStudy()"/>
 				</fieldset>
 			</form>
 			

@@ -13,7 +13,8 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-        errorReport(-1, "status:postgresql:connectionfailure");
+	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -21,7 +22,8 @@ if (!$handle) {
 $loginEmailAddress;
 $loginPassword;
 if (empty($_POST['loginEmailAddress']) || empty($_POST['loginPassword'])) {
-        errorReport(-1, "status:ajax:incompleteform");
+	$error = array('type' => 'ajax', 'message' => 'missingvalues');
+        errorReport(-1, json_encode(array('error' => $error)));
 	exit();
 }
 if(!get_magic_quotes_gpc()) {
@@ -47,15 +49,16 @@ if ($result) {
         else {
 		$rowArray = pg_fetch_array($result, 0, PGSQL_NUM);
 		if (password_verify($loginPassword, $rowArray[0])) {
-			echo "authenticate:pass";
+			echo json_encode(array('payload' => array('authenticate' => 'pass')));
 		}
 		else {
-			echo "authenticate:fail";
+			echo json_encode(array('payload' => array('authenticate' => 'fail')));
 			exit();
 		}
 	}
 } else {
-        errorReport(-1, "status:postgresql:queryfailure");
+	$error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
 	exit();
 }
 
@@ -64,9 +67,10 @@ session_start();
 
 // update session
 $_SESSION["logged_in"] = true;
-$_SESSION["user_email_address"] = $loginEmailAddress;
+$_SESSION["email_address"] = $loginEmailAddress;
 $_SESSION["viewed_study"] = '';
 $_SESSION["viewed_participant"] = '';
+$_SESSION["viewed_logentry"] = '';
 
 // close connection
 pg_close($handle);

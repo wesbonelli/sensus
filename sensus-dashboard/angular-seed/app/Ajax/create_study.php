@@ -9,8 +9,14 @@ set_error_handler('errorReport');
 session_start();
 
 // check if user is logged in
-if ($_SESSION["logged_in"] == false) {
-        errorReport(-1, "status:session:expired");
+if (!isset($_SESSION["logged_in"])) {
+        $error = array('type' => 'session', 'message' => 'doesnotexist');
+        errorReport(-1, json_encode(array('error' => $error)));
+        exit();
+}
+else if ($_SESSION["logged_in"] == false) {
+        $error = array('type' => 'session', 'message' => 'expired');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -22,7 +28,8 @@ $pgsqlPassword = $json['ajax']['pw'];
 // set up database connection
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-        errorReport(-1, 'status:postgresql:connectionfailure.');
+	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -30,30 +37,34 @@ if (!$handle) {
 $studyName;
 $studyStartDate;
 $studyEndDate;
-$studyRunning = 'f';
-if (empty($_POST['studyName']) || empty($_POST['studyStartDate']))
-	errorReport(-1, "status:ajax:formincomplete");
+$studyDescription;
+if (empty($_POST['studyName']) || empty($_POST['studyStartDate'] || empty($_POST['studyDescription'])))
+	$error = array('type' => 'ajax', 'message' => 'missingvalues');
+        errorReport(-1, json_encode(array('error' => $error)));
 if(!get_magic_quotes_gpc()) {
 	$studyName = addslashes($_POST['studyName']);
 	$studyStartDate = addslashes($_POST['studyStartDate']);
 	$studyEndDate = addslashes($_POST['studyEndDate']);
+	$studyDescription = addslashes($_POST['studyDescription']);
 } else {
 	$studyName = $_POST['studyName'];
 	$studyStartDate = $_POST['studyStartDate'];
 	$studyEndDate = $_POST['studyEndDate'];
+	$studyDescription = $_POST['studyDescription'];
 }
 
 // build query
 if (empty($_POST['studyEndDate'])) {
-	$query = "INSERT INTO study (name, startdate) VALUES ('$studyName', '$studyStartDate');";
+	$query = "INSERT INTO study (name, startdate, description) VALUES ('$studyName', '$studyStartDate', '$studyDescription');";
 } else {
-	$query = "INSERT INTO study (name, startdate, enddate) VALUES ('$studyName', '$studyStartDate', '$studyEndDate');";
+	$query = "INSERT INTO study (name, startdate, enddate, description) VALUES ('$studyName', '$studyStartDate', '$studyEndDate', '$studyDescription');";
 }
 
 // execute query
 $result = pg_query($handle, $query);
 if (!$result) {
-	errorReport(-1, "statuspostgresql:queryfailure");
+	$error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
 	exit();
 }
 

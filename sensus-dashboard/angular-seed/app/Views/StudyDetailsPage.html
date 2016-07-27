@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<body>
+        <ul class="headersection">
+                <li text-align="left"><input type="submit" value="Back" data-ng-click="back()" /></li>
+                <li style="float:right"><input type="submit" value="Logout" data-ng-click="logout()" /></li>
+                <li style="float:right">{{user.emailAddress}}</li>
+        </ul>
+
+	<div class="section">
+		<br/>
+		<ul>
+                        <li><h3>Researchers</h3></li>
+                        <li style="float:right"><input type="submit" value="Edit" data-ng-click="editResearchers()" /></li>
+                        <li><br/><hr/></li>
+                </ul>
+                <table style="width:100%">
+                        {{researchers.message}}
+                        <tr>
+                                <div ng-repeat="researcher in researchers | orderBy:'emailaddress'">
+                                        <ul>
+                                                <li><hr/></li>
+                                                <li>{{researcher.firstname}} {{researcher.lastname}}</li>
+                                                <li>{{researcher.emailaddress}}</li>
+                                        </ul<>
+                                </div>
+                        </tr>
+                        </hr>
+                </table>
+
+                <br/>
+                <br/>
+
+                <ul>
+                        <li><h3>Goals</h3></li>
+                        <li style="float:right"><input type="submit" value="Edit" data-ng-click="editGoals()" /></li>
+                        <li><br/><hr/></li>
+                </ul>
+
+                <br/>
+                <br/>
+
+                <ul>
+                        <li><h3>Hypotheses</h3></li>
+                        <li style="float:right"><input type="submit" value="Edit" data-ng-click="editHypotheses()" /></li>
+                        <li><br/><hr/></li>
+                </ul>
+	</div>
+</body>
+</html>

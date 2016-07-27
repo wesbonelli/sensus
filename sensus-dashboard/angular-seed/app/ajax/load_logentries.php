@@ -1,7 +1,7 @@
 <?php
 
 header('Access-Control-Allow-Origin: http://ec2-54-227-229-48.compute-1.amazonaws.com/app/*');
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
 include('app.php');
 set_error_handler('errorReport');
 
@@ -10,21 +10,19 @@ session_start();
 
 // check if user is logged in
 if (!isset($_SESSION["logged_in"])) {
-        $error = array('type' => 'session', 'message' => 'doesnotexist');
+	$error = array('type' => 'session', 'message' => 'doesnotexist');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 else if ($_SESSION["logged_in"] == false) {
-        $error = array('type' => 'session', 'message' => 'expired');
+	$error = array('type' => 'session', 'message' => 'expired');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
-// update session
-$_SESSION["viewed_participant"] = '';
-
-// get viewed study
-$viewedStudy = $_SESSION["viewed_study"];
+// get session information
+$studyName = $_SESSION["viewed_study"];
+$participantEmailAddress = $_SESSION["viewed_participant"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -39,20 +37,29 @@ if (!$handle) {
         exit();
 }
 
-// load participant
-$query = "SELECT emailaddress, startdate, enddate FROM participant WHERE studyname = '$viewedStudy';";
+// load alerts
+if ($studyName == '' && $participantEmailAddress == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry;";
+} else if ($studyName == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourceparticipantemailaddress = '$participantEmailAddress';";
+} else if ($participantEmailAddress == '') {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudyname = '$studyName';";
+} else {
+	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudyname = '$stuyName' AND sourceparticipantemailaddress = '$participantEmailAddress';";
+}
+
 $result = pg_query($handle, $query);
 if ($result) {
 	$json = array('payload' => null);
         while ($row = pg_fetch_assoc($result)) {
         	if ($row != null) {
-			$values[] = $row;
-                        $json = array('payload' => $values);
+	        	$values[] = $row;
+			$json = array('payload' => $values);
 		}
-	}
+        }
         echo json_encode($json);
 } else {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
+	$error = array('type' => 'session', 'database' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
 }
 

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<ul class="headersection">
+		<li style="float:right"><input type="submit" value="Logout" data-ng-click="logout()" /></li>
+		<li style="float:right">{{user.emailAddress}}</li>
+        </ul>
+	
+	<div class="section" style="float:left; width:60%;">
+        	<ul>
+			<li><h3>Studies</h3></li>
+			<li style="float:right"><input type="submit" value="New Study" data-ng-click="createStudy()" /></li>
+        		<li><br/><hr/></li>
+		</ul>
+		<table style="width:100%">
+                	<tr>
+                        	{{studies.message}}
+                	</tr>
+                	<tr>
+                        	<div ng-repeat="study in studies.list | orderBy:'endDate'">
+					<ul>
+						<li><svg ng-style="{'width':'12px', 'height':'12px', 'background':study.color, '-moz-border-radius':'20px', '-webkit-border-radius':'20px', 'border-radius':'20px'}"></svg></li>
+						<li>{{study.name}}</li>
+						<li style="float:right"><input type="submit" value="Delete" data-ng-click="deleteStudy(study)" /></li>
+						<li style="float:right"><input type="submit" value="View" data-ng-click="viewStudy(study)" /></li>
+					</ul<>
+				</div>
+                	</tr>
+        	</table>
+	</div>
+	<div class="section" style="float:right; width:30%;">
+                <ul>
+                        <li><h3>Event Log</h3></li>
+                        <li style="float:right"><input type="submit" value="View All" data-ng-click="viewAllLogEntries()" /></li>
+			<li style="float:right"><input type="submit" value="Refresh" data-ng-click="refreshLogEntries()" /></li>
+			<li><br/><hr/></li>
+                </ul>
+		<table style="width:100%">
+                        <tr>
+                                {{logEntries.message}}
+                        </tr>
+			<tr>
+                                <div ng-repeat="logentry in logEntries.list | orderBy:'timestamp'">
+                                        <ul>
+                                                <li style="float:right"><input type="submit" value="View" data-ng-click="viewLogEntry(logentry)" /></li>
+                                                <li>{{logentry.timestamp}}</li>
+                                                <li></br></li>
+                                                <li>{{logentry.sourceStudyName}}</li>
+                                                <li></br></li>
+                                                <li>{{logentry.message}}</li>
+                                                <li></br></li>
+                                        </ul>
+                                </div>
+                        </tr>
+                        </hr>
+                </table>
+	</div>
+</body>
+</html>
+
+

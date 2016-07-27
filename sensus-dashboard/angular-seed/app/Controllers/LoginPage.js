@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('myApp.LoginPage', ['ngRoute'])
+angular.module('SensusPortal.LoginPage', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/LoginPage', {
@@ -14,7 +14,7 @@ angular.module('myApp.LoginPage', ['ngRoute'])
 	$scope.formData = {};
 
 	// tries to authenticate the form and, if valid, switches to StudyLandingPage
-	$scope.onLogin = function() {
+	$scope.login = function() {
 		$scope.emailAddress = 
                 $http({
                         method  : 'POST',
@@ -22,18 +22,20 @@ angular.module('myApp.LoginPage', ['ngRoute'])
                         data    : $.param($scope.formData),
                         headers : { 'Content-type': 'application/x-www-form-urlencoded' },
                 }).success(function(data) {
-			if (data == 'authenticate:pass') {
-				$location.path('/StudyLandingPage');
-           		} else if (data == 'authenticate:fail') {
+			if (data.error == null && data.payload.authenticate == 'pass') {
+				$location.path('/StudiesPage');
+           		} else if (data.error == null && data.payload.authenticate == 'fail') {
 				alert("Bad email address or password");
+			} else if (data.error != null) {
+				alert("error: " + data.error.type.toString() + " - " + data.error.message.toString());
 			} else {
-				alert(data);
+				alert(data.toString());
 			}
                 });
         };
 
 	// switch to RegisterResearcherPage
-	$scope.onRegister = function() {
+	$scope.register = function() {
 		$location.path('/RegisterResearcherPage');
 	}
 });

@@ -1,8 +1,7 @@
 /***** text styles *****/
 
 .section {
-	margin: 10px 10px 10px 10px;
-	padding: 5px 10px 10px 5px;
+	padding: 5px 30px 5px 30px;
 }
 
 .label {
@@ -56,6 +55,10 @@
 	width: 50%;
 }
 
+.centerlist {
+	padding: 20px 60px 20px 60px;
+}
+
 .body {
 	text-align: center;
 }
@@ -81,14 +84,22 @@ li {
 	display: inline;
 }
 
+textarea {
+	width: 40%;
+	margin: 2px 2px 2px 2px;
+        padding: 2px 2px 2px 2px;
+}
+
 /***** input styles *****/
 
 input[type=text] {
+	width: 40%;
 	margin: 2px 2px 2px 2px;
 	padding: 2px 2px 2px 2px;
 }
 
 input[type=password] {
+	width: 40%;
 	margin: 2px 2px 2px 2px;
 	padding: 2px 2px 2px;
 }
@@ -99,7 +110,15 @@ input[type=checkbox] {
 }
 
 input[type=submit] {
-	margin: 2px 2px 2px 2px;
+	background-color: white;
+	margin: 5px 5px 5px 5px;
+	padding 5px 5px 5px 5px;
+	border: 0.5px solid white;
+	transition-duration: 0.1s;
+}
+
+input[type=submit]:hover {
+	border: 0.5px solid black;
 }
 
 /***** shapes *****/

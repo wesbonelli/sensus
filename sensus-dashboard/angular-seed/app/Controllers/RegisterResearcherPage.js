@@ -1,6 +1,6 @@
 'use strict';
 
-angular.module('myApp.RegisterResearcherPage', ['ngRoute'])
+angular.module('SensusPortal.RegisterResearcherPage', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
   $routeProvider.when('/RegisterResearcherPage', {
@@ -10,11 +10,10 @@ angular.module('myApp.RegisterResearcherPage', ['ngRoute'])
 }])
 
 .controller('RegisterResearcherPageCtrl', function($scope, $http, $location) {
-	// input fields
+	
         $scope.formData = {};
 
-	// update database and switch to StudyLandingPage
-        $scope.onRegister = function() {
+        $scope.register = function() {
                 var create;
                 $http({
                         method  : 'POST',
@@ -31,8 +30,7 @@ angular.module('myApp.RegisterResearcherPage', ['ngRoute'])
                 });
         };
 
-	// switch to LoginPage
-        $scope.onCancel = function() {
+        $scope.back = function() {
                 $location.path('/LoginPage');
         };
 });

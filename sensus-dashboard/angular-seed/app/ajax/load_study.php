@@ -20,8 +20,8 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
-// update session
-$_SESSION["viewed_study"] = '';
+// get viewed study from session
+$studyName = $_SESSION["viewed_study"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -36,17 +36,16 @@ if (!$handle) {
         exit();
 }
 
-// load studies
-$query = "SELECT name, startdate, enddate FROM study";
+// load study
+$query = "SELECT name, startdate, enddate, description FROM study WHERE name = '$studyName';";
 $result = pg_query($handle, $query);
 if ($result) {
-	$json = array('payload' => null);
-	while ($row = pg_fetch_assoc($result)) {
+	$json = null;
+        while ($row = pg_fetch_assoc($result))
 		if ($row != null) {
-			$values[] = $row;
+                	$values[] = $row;
 			$json = array('payload' => $values);
-		}
-	}
+        	}
 	echo json_encode($json);
 } else {
 	$error = array('type' => 'database', 'message' => 'queryfailure');

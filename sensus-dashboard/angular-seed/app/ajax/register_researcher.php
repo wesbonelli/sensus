@@ -13,7 +13,8 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-        errorReport(-1, "status:postgresql:connectionfailure");
+	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
@@ -23,7 +24,8 @@ $researcherLastName;
 $researcherEmailAddress;
 $researcherPassword;
 if (empty($_POST['researcherFirstName']) || empty($_POST['researcherLastName']) || empty($_POST['researcherEmailAddress']) || empty($_POST['researcherPassword']))
-        errorReport("status:ajax:incompleteform");
+        $error = array('type' => 'ajax', 'message' => 'missingvalues');
+        errorReport(-1, json_encode(array('error' => $error)));
 if(!get_magic_quotes_gpc()) {
         $researcherFirstName = addslashes($_POST['researcherFirstName']);
         $researcherLastName = addslashes($_POST['researcherLastName']);
@@ -45,7 +47,8 @@ $query = "INSERT INTO researcher (firstname, lastname, emailaddress, password) V
 // execute query
 $result = pg_query($handle, $query);
 if (!$result) {
-        errorReport(-1, "status:postgresql:queryfailure");
+	$error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
 }
 
 // close connection

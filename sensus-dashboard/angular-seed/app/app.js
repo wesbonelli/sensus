@@ -1,15 +1,17 @@
 'use strict';
 	
-angular.module('myApp', [
+angular.module('SensusPortal', [
 	  	'ngRoute',
-		'myApp.LoginPage',
-		'myApp.RegisterResearcherPage',
-		'myApp.StudyLandingPage',
-		'myApp.CreateStudyPage',
-		'myApp.SelectedStudyPage',
-	  	'myApp.RegisterParticipantPage',
-		'myApp.version'
-	])
+		'SensusPortal.LoginPage',
+		'SensusPortal.RegisterResearcherPage',
+		'SensusPortal.StudiesPage',
+		'SensusPortal.CreateStudyPage',
+		'SensusPortal.StudyPage',
+		'SensusPortal.StudyDetailsPage',
+		'SensusPortal.ParticipantPage',
+	  	'SensusPortal.EditParticipantsPage',
+		'SensusPortal.version'
+])
 .config(['$routeProvider', function($routeProvider) {
   	$routeProvider.otherwise({redirectTo: '/LoginPage'});
 }]);

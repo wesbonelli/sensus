@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<body>
+        <ul class="headersection">
+                <li><input type="submit" value="Back" data-ng-click="back()"/></li>
+                <li style="float:right"><input type="submit" value="Logout" data-ng-click="logout()" /></li>
+                <li style="float:right">{{user.emailAddress}}</li>
+        </ul>
+
+	<div class="section" style="float:left; width:60%;">
+		<ul>
+			<li><h2>{{study.name}}</h2></li>
+			<li style="float:right; padding:0 0 0 15px"><input type="submit" value="Anonymization" data-ng-click="editAnonymizationSettings()" /></li>
+			<li style="float:right; padding:0 0 0 15px"><input type="submit" value="Data" data-ng-click="viewStudyData()" /></li>
+			<li style="float:right; padding:0 0 0 15px"><input type="submit" value="Details" data-ng-click="viewStudyDetails()" /></li>
+			<li><br/><hr/></li>
+		</ul>
+        	<ul>
+                	<li><h3>Overview</h3></li>
+			<li><font ng-bind="study.startDate | date:'MM/dd/yyyy'"></font> - <font ng-bind="study.endDate | date: 'MM/dd/yyyy'"></font></li>
+			<br/>
+			<li>{{study.description}}</li>
+        	</ul>
+		
+		<br/>
+                <br/>
+
+		<ul>
+                        <li><h3>Participants</h3></li>
+			<li>Total: {{participants.total}}</li>
+			<br/>
+                	<li>Active: {{participants.active}}</li>
+                        <br/>
+                        <li>Inactive: {{participants.inactive}}</li>
+			<li style="float:right"><input type="submit" value="Edit" data-ng-click="editParticipants()" /></li>
+
+			<li><br/><hr/></li>
+		</ul>
+                <table style="width:100%">
+                        {{participants.message}}
+                        <tr>
+                                <div ng-repeat="participant in participants.list | orderBy:'endDate'">
+                                        <ul>
+						<li><svg ng-style="{'width':'12px', 'height':'12px', 'background':participant.color, '-moz-border-radius':'20px', '-webkit-border-radius':'20px', 'border-radius':'20px'}"></svg></li>
+                                                <li>{{participant.emailAddress}}</li>
+                                                <li style="float:right"><input type="submit" value="View" data-ng-click="viewParticipant(participant)" /></li>
+                                        </ul<>
+                                </div>
+                        </tr>
+                </table>
+        </div>
+        <div class="section" style="float:right; width:30%;">
+                <ul>
+                        <li><h3>Event Log</h3></li>
+                        <li style="float:right"><input type="submit" value="View All" data-ng-click="viewAllLogEntries()" /></li>
+			<li style="float:right"><input type="submit" value="Refresh" data-ng-click="refreshLogEntries()" /></li>
+                </ul>
+		<hr/>
+                <table style="width:100%">
+                        <tr>
+                                {{logEntries.message}}
+                        </tr
+                        <tr>
+                                <div ng-repeat="logEntry in logEntries.list | orderBy:'timestamp'">
+                                	<ul>
+						<li style="float:right"><input type="submit" value="View" data-ng-click="viewLogEntry(logentry)" /></li>
+                    				<li>{{logEntry.timestamp}}</li>
+                                        	<li></br></li>
+                                        	<li>{{logEntry.sourceStudyName}}</li>
+                                        	<li></br></li>
+                                        	<li>{{logEntry.message}}</li>
+                                        	<li></br></li>
+					</ul>
+                                </div>
+                        </tr>
+                </table>
+        </div>
+</body>
+</html>

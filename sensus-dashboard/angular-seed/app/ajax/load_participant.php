@@ -20,8 +20,9 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
-// update session
-$_SESSION["viewed_study"] = '';
+// get viewed study and participant from session
+$studyName = $_SESSION["viewed_study"];
+$participantEmailAddress = $_SESSION["viewed_participant"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -31,25 +32,24 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        $error = array('type' => 'database', 'message' => 'connectionfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
-// load studies
-$query = "SELECT name, startdate, enddate FROM study";
+// load participant
+$query = "SELECT id, startdate, enddate FROM participant WHERE studyname = '$studyName' AND emailaddress = '$participantEmailAddress';";
 $result = pg_query($handle, $query);
 if ($result) {
-	$json = array('payload' => null);
-	while ($row = pg_fetch_assoc($result)) {
-		if ($row != null) {
-			$values[] = $row;
-			$json = array('payload' => $values);
-		}
-	}
-	echo json_encode($json);
+        $json = null;
+        while ($row = pg_fetch_assoc($result))
+                if ($row != null) {
+                        $values[] = $row;
+                        $json = array('payload' => $values);
+                }
+        echo json_encode($json);
 } else {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
+        $error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
 }
 
