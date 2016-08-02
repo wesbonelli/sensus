@@ -44,7 +44,7 @@ $result = pg_query($handle, $query);
 if ($result) {
 	// if no rows were returned, email was incorrect
 	if (pg_num_rows($result) == 0)
-                echo "authenticate:fail";
+		echo json_encode(array('payload' => array('authenticate' => 'fail')));
 	// if a row was returned, check password
         else {
 		$rowArray = pg_fetch_array($result, 0, PGSQL_NUM);

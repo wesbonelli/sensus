@@ -13,8 +13,7 @@ angular.module('SensusPortal.LoginPage', ['ngRoute'])
 	
 	$scope.formData = {};
 
-	// tries to authenticate the form and, if valid, switches to StudyLandingPage
-	$scope.login = function() {
+	$scope.submit = function() {
 		$scope.emailAddress = 
                 $http({
                         method  : 'POST',
@@ -34,8 +33,7 @@ angular.module('SensusPortal.LoginPage', ['ngRoute'])
                 });
         };
 
-	// switch to RegisterResearcherPage
-	$scope.register = function() {
-		$location.path('/RegisterResearcherPage');
+	$scope.createAccount = function() {
+		$location.path('/CreateAccountPage');
 	}
 });

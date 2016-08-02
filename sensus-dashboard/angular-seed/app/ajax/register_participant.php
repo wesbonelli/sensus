@@ -21,7 +21,7 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get session data
-$participantStudyName = $_SESSION["viewed_study"];
+$participantStudyTitle = $_SESSION["viewed_study"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -70,7 +70,7 @@ if (!empty($_POST['participantAnonymize'])) {
 
 
 // build query
-$query = "INSERT INTO participant (emailaddress, startdate, enddate, studyname) VALUES ('$participantEmailAddress', '$participantStartDate', '$participantEndDate', '$participantStudyName');";
+$query = "INSERT INTO participant (emailaddress, startdate, enddate, studytitle) VALUES ('$participantEmailAddress', '$participantStartDate', '$participantEndDate', '$participantStudyTitle');";
 
 // execute query
 $result = pg_query($handle, $query);

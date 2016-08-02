@@ -21,7 +21,7 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get session information
-$studyName = $_SESSION["viewed_study"];
+$studyTitle = $_SESSION["viewed_study"];
 $participantEmailAddress = $_SESSION["viewed_participant"];
 
 // get database password
@@ -38,14 +38,14 @@ if (!$handle) {
 }
 
 // load alerts
-if ($studyName == '' && $participantEmailAddress == '') {
-	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry;";
-} else if ($studyName == '') {
-	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourceparticipantemailaddress = '$participantEmailAddress';";
+if ($studyTitle == '' && $participantEmailAddress == '') {
+	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry;";
+} else if ($studyTitle == '') {
+	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourceparticipantemailaddress = '$participantEmailAddress';";
 } else if ($participantEmailAddress == '') {
-	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudyname = '$studyName';";
+	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudytitle = '$studyTitle';";
 } else {
-	$query = "SELECT sourcestudyname, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudyname = '$stuyName' AND sourceparticipantemailaddress = '$participantEmailAddress';";
+	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudytitle = '$studyTitle' AND sourceparticipantemailaddress = '$participantEmailAddress';";
 }
 
 $result = pg_query($handle, $query);

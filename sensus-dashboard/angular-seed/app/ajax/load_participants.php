@@ -40,7 +40,7 @@ if (!$handle) {
 }
 
 // load participant
-$query = "SELECT emailaddress, startdate, enddate FROM participant WHERE studyname = '$viewedStudy';";
+$query = "SELECT emailaddress, startdate, enddate FROM participant WHERE studytitle = '$viewedStudy';";
 $result = pg_query($handle, $query);
 if ($result) {
 	$json = array('payload' => null);

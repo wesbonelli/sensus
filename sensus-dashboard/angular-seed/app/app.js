@@ -3,15 +3,27 @@
 angular.module('SensusPortal', [
 	  	'ngRoute',
 		'SensusPortal.LoginPage',
-		'SensusPortal.RegisterResearcherPage',
+		'SensusPortal.CreateAccountPage',
+		'SensusPortal.AccountPage',
 		'SensusPortal.StudiesPage',
 		'SensusPortal.CreateStudyPage',
 		'SensusPortal.StudyPage',
 		'SensusPortal.StudyDetailsPage',
 		'SensusPortal.ParticipantPage',
-	  	'SensusPortal.EditParticipantsPage',
+	  	'SensusPortal.ParticipantsPage',
 		'SensusPortal.version'
 ])
+
 .config(['$routeProvider', function($routeProvider) {
   	$routeProvider.otherwise({redirectTo: '/LoginPage'});
-}]);
+}])
+
+.directive('jqdatepicker', function () {
+        return {
+                restrict: 'A',
+                require: 'ngModel',
+                link: function (scope, element, attrs, ngModelCtrl) {
+                        element.datepicker();
+                }
+        };
+});

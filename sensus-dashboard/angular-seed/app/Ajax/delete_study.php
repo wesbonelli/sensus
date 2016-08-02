@@ -34,18 +34,18 @@ if (!$handle) {
 }
 
 // check and set POST values
-$studyName;
-if (empty($_POST['studyName']))
+$studyTitle;
+if (empty($_POST['studyTitle']))
 	$error = array('type' => 'ajax', 'message' => 'missingvalues');
         errorReport(-1, json_encode(array('error' => $error)));
 if(! get_magic_quotes_gpc() ) {
-	$studyName = addslashes($_POST['studyName']);
+	$studyTitle = addslashes($_POST['studyTitle']);
 } else {
-	$studyName = $_POST['studyName'];
+	$studyTitle = $_POST['studyTitle'];
 }
 
 // execute query
-$query = "DELETE FROM study WHERE name = '$studyName'";
+$query = "DELETE FROM study WHERE title = '$studyTitle'";
 $result = pg_query($handle, $query);
 if (!$result) {
 	$error = array('type' => 'database', 'message' => 'queryfailure');

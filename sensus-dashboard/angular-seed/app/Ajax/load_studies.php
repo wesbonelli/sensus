@@ -37,7 +37,7 @@ if (!$handle) {
 }
 
 // load studies
-$query = "SELECT name, startdate, enddate FROM study";
+$query = "SELECT title, description, startdate, enddate FROM study";
 $result = pg_query($handle, $query);
 if ($result) {
 	$json = array('payload' => null);

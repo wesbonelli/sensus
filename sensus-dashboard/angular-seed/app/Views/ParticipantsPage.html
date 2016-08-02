@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <body>
-
 	<div class="header_menu">
                 <div class="header_menu_actions">
                         <ul class="header_menu_actions_cont left">
@@ -39,88 +38,53 @@
                                         <li class="nav_menu_item">
                                                 <button class="nav_button blue_hover_top" type="button" data-ng-click="goToStudy()">{{study.title}}</button>
                                         </li>
-                                        <li class="nav_menu_item">
+					<li class="nav_menu_item">
                                                 <a class="nav_text"> &gt </a>
                                         </li>
                                         <li class="nav_menu_item">
-                                                <button class="nav_button blue_hover_top" type="button" data-ng-click="reload()">Participant: {{participant.emailAddress}}</button>
+                                                <button class="nav_button blue_hover_top" type="button" data-ng-click="reload()">Participants</button>
                                         </li>
                                 </ul>
                         </div>
                 </div>
         </div>
 	<div class="body_section" style="padding-top:25px;">
-		<div class="horiz_menu">
-			<div class="horiz_menu_actions">
-				<ul class="fit">
-					<li class="horiz_menu_item">
-						<a class="menu_text">{{participant.emailAddress}}</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-		<div class="body_section left">
-			<div class="horiz_menu">
+                <div class="horiz_menu">
+                        <div class="horiz_menu_actions">
+                                <ul class="fit">
+                                        <li class="horiz_menu_item">
+                                                <font class="menu_text">Participants</font>
+                                        </li>
+                                </ul>
+				<ul class="right_menu">
+                                        <li class="horiz_menu_item">
+                                                <button class="body_button blue_hover" type="button" data-ng-click="removeParticipant()">Remove</button>
+                                        </li>
+                                </ul>
+				<ul class="right_menu">
+                                        <li class="horiz_menu_item">
+                                                <button class="body_button blue_hover" type="button" data-ng-click="addParticipant()">Add</button>
+                                        </li>
+                                </ul>
+                        </div>
+                </div>
+		<div class="body_section inner">
+			<div class="horiz_white_menu" ng-repeat="participant in participants.list | orderBy:'endDate'">
+			{{participants.message}}
 				<div class="horiz_menu_actions">
 					<ul class="fit">
 						<li class="horiz_menu_item">
-							<a class="menu_text">Details</a>
+							<li class="horiz_menu_item"><svg class="small_rectangle" ng-style="{'background-color':participant.color}"></svg></li>
 						</li>
-					</ul>
-					<ul class="right_menu fit">
 						<li class="horiz_menu_item">
-							<button class="body_button blue_hover" type="button" data-ng-click="editParticipantDetails()">Edit</button>
+							<font class="block_body_text">{{participant.emailAddress}}</font>
 						</li>
 					</ul>
-				</div>
-			</div>
-
-			<div class="body_section inner">
-				<div class="horiz_auto_block">
-					<div class="block_text_area">
-						<a class="block_text">Start date:</a>
-						<a class="block_text" ng-bind="participant.startDate | date:'MM/dd/yyyy'"></a>
-						<br>
-						<a class="block_text">End date:</a>
-						<a class="block_text" ng-bind="participant.endDate | date: 'MM/dd/yyyy'"></a>
-					</div>
-				</div>
-			</div>
-		</div>
-		<div class="body_section right">
-			<div class="horiz_menu">
-				<div class="horiz_menu_actions">
-					<ul class="fit">
+					<ul class="right_menu offset">
 						<li class="horiz_menu_item">
-							<font class="menu_text">Log</font>
+							<button class="body_list_button blue_hover" type="button" data-ng-click="goToParticipant(participant)">View</button>
 						</li>
 					</ul>
-					<ul class="right_menu fit">
-						<li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="refreshLogEntries()">Refresh</button>
-						</li>
-						<li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="goToLogEntries()">View all</button>
-						</li>
-					</ul>
-				</div>
-			</div>
-
-
-			<div class="body_section inner">
-				<div class="horiz_medium_block" ng-repeat="logentry in logEntries.list | orderBy:'timestamp'">
-					<div class="horiz_menu_actions">
-                                                <ul class="right_menu offset">
-                                                        <li class="horiz_menu_item">
-                                                                <button class="block_top_button blue_hover_top" type="button" data-ng-click="goToLogEntry(logentry)">View</button>
-                                                        </li>
-                                                </ul>
-                                        </div>
-                                        <div class="block_text_area">
-                                                <a class="block_text" ng-bind="logentry.timestamp | date:'MM/dd/yy HH:mm'"></a>
-                                                <br>
-                                                <a class="block_text">{{logentry.sourceStudyTitle}}</a>
-                                                <br>
-                                                <a class="block_text">{{logentry.message}}</a>
-                                        </div>
 				</div>
 			</div>
 		</div>

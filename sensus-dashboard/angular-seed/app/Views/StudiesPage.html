@@ -1,59 +1,147 @@
 <!DOCTYPE html>
 <html>
 <body>
-	<ul class="headersection">
-		<li style="float:right"><input type="submit" value="Logout" data-ng-click="logout()" /></li>
-		<li style="float:right">{{user.emailAddress}}</li>
-        </ul>
-	
-	<div class="section" style="float:left; width:60%;">
-        	<ul>
-			<li><h3>Studies</h3></li>
-			<li style="float:right"><input type="submit" value="New Study" data-ng-click="createStudy()" /></li>
-        		<li><br/><hr/></li>
-		</ul>
-		<table style="width:100%">
-                	<tr>
-                        	{{studies.message}}
-                	</tr>
-                	<tr>
-                        	<div ng-repeat="study in studies.list | orderBy:'endDate'">
-					<ul>
-						<li><svg ng-style="{'width':'12px', 'height':'12px', 'background':study.color, '-moz-border-radius':'20px', '-webkit-border-radius':'20px', 'border-radius':'20px'}"></svg></li>
-						<li>{{study.name}}</li>
-						<li style="float:right"><input type="submit" value="Delete" data-ng-click="deleteStudy(study)" /></li>
-						<li style="float:right"><input type="submit" value="View" data-ng-click="viewStudy(study)" /></li>
-					</ul<>
-				</div>
-                	</tr>
-        	</table>
+	<div class="header_menu">
+		<div class="header_menu_actions">
+			<ul class="header_menu_actions_cont left">
+				<li class="header_menu_item">
+					<img src="https://lh3.ggpht.com/GtQ3zUlID3oXnhMLmoqMAVqugCyhPaM3XjqJp67fd8C2Yamv6uzK8izjgZCb8CpMog=w170" alt="Sensus" height="40px" width="40px" style="padding-left:5px;"/>
+				</li>
+				<li class="header_menu_item">
+					<button class="body_button header_button header_text" type="button" data-ng-click="reload()">Sensus Portal</button>
+				</li>
+			</ul>
+			<ul class="header_menu_actions_cont right">
+                                <li class="header_menu_item">
+					<button class="body_button blue_hover header_button" type="button" data-ng-click="goToAccount()">{{user.emailAddress}}</button>
+				</li>
+                                <li class="header_menu_item">
+					<button class="body_button red_hover header_button" type="button" data-ng-click="signOut()">Sign out</button>
+				</li>
+                        </ul>
+		</div> 
 	</div>
-	<div class="section" style="float:right; width:30%;">
-                <ul>
-                        <li><h3>Event Log</h3></li>
-                        <li style="float:right"><input type="submit" value="View All" data-ng-click="viewAllLogEntries()" /></li>
-			<li style="float:right"><input type="submit" value="Refresh" data-ng-click="refreshLogEntries()" /></li>
-			<li><br/><hr/></li>
-                </ul>
-		<table style="width:100%">
-                        <tr>
-                                {{logEntries.message}}
-                        </tr>
-			<tr>
-                                <div ng-repeat="logentry in logEntries.list | orderBy:'timestamp'">
-                                        <ul>
-                                                <li style="float:right"><input type="submit" value="View" data-ng-click="viewLogEntry(logentry)" /></li>
-                                                <li>{{logentry.timestamp}}</li>
-                                                <li></br></li>
-                                                <li>{{logentry.sourceStudyName}}</li>
-                                                <li></br></li>
-                                                <li>{{logentry.message}}</li>
-                                                <li></br></li>
+
+	<div class="nav_section">
+                <div class="nav_menu">
+                        <div class="nav_menu_actions">
+                                <ul class="nav_menu_actions_cont left">
+                                        <li class="nav_menu_item">
+                                                <a class="nav_text"> &gt </a>
+                                        </li>
+                                        <li class="nav_menu_item">
+                                                <button class="nav_button blue_hover_top" type="button" data-ng-click="reload()">Studies</button>
+                                        </li>
+                                </ul>
+                        </div>
+                </div>
+        </div>
+
+	<div class="body_section" style="padding-top:25px;">
+                <div class="horiz_menu">
+                        <div class="horiz_menu_actions">
+                                <ul class="fit">
+                                        <li class="horiz_menu_item">
+                                                <a class="menu_text">Your Sensus Studies</a>
+                                        </li>
+                                </ul>
+				<ul class="right_menu">
+                                        <li class="horiz_menu_item">
+                                                <button class="body_button blue_hover" type="button" data-ng-click="goToCreateStudy()">New study</button
+>
+                                        </li>
+                                </ul>
+                        </div>
+                </div>
+		<div class="body_section right">
+                        <div class="horiz_menu">
+                                <div class="horiz_menu_actions">
+                                        <ul>    
+                                                <li class="horiz_menu_item">
+                                                        <font class="menu_text">Log</font>
+                                                </li>
+                                        </ul>
+                                        <ul class="right_menu">
+                                                <li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="refreshLogEntries()">Refresh</button>
+                                                </li>
+                                                <li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="goToLogEntries()">View all</button>
+                                                </li>
                                         </ul>
                                 </div>
-                        </tr>
-                        </hr>
-                </table>
+                        </div>
+                        <div class="body_section inner">
+                                <div class="horiz_medium_block" ng-repeat="logentry in logEntries.list | orderBy:'timestamp'">
+                                        <div class="horiz_menu_actions">
+                                                <ul class="right_menu offset">
+                                                        <li class="horiz_menu_item">
+                                                                <button class="block_top_button blue_hover_top" type="button" data-ng-click="goToLogEntry(logentry)">View</button>
+                                                        </li>
+                                                </ul<>
+                                        </div>
+                                        <div class="block_text_area">
+                                                <a class="block_text" ng-bind="logentry.timestamp | date:'MM/dd/yy HH:mm'"></a>
+                                                <br>
+                                                <a class="block_text">{{logentry.sourceStudyTitle}}</a>
+                                                <br>
+                                                <a class="block_text">{{logentry.message}}</a>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+		<div class="body_section left">
+			<div class="horiz_menu">
+                                <div class="horiz_menu_actions">
+                                        <ul class="fit">
+                                                <li class="horiz_menu_item">
+                                                        <a class="menu_text">Active</a>
+                                                </li>
+                                        </ul>
+                                </div>
+                        </div>
+			<div class="body_section inner">
+				<div class="horiz_medium_block" ng-repeat="study in studies.active">
+					<div class="horiz_menu_actions">
+						<ul class="right_menu offset">
+							<li class="horiz_menu_item">
+								<button class="block_top_button blue_hover_top" type="button" data-ng-click="goToStudy(study)">View</button>
+							</li>
+						</ul<>
+					</div>
+					<div class="block_text_area">
+						<a class="header_text">{{study.title}}</a>
+						<br>
+						<a class="block_text">{{study.description}}</a>
+                                        </div>
+				</div>
+			</div>
+		</div>
+		<div class="body_section left">
+			<div class="horiz_menu">
+                                <div class="horiz_menu_actions">
+                                        <ul class="fit">
+                                                <li class="horiz_menu_item">
+                                                        <a class="menu_text">Inactive</a>
+                                                </li>
+                                        </ul>
+                                </div>
+                        </div>
+			<div class="body_section inner">
+                                <div class="horiz_medium_block" ng-repeat="study in studies.inactive">
+                                        <div class="horiz_menu_actions">
+                                                <ul class="right_menu offset">
+                                                        <li class="horiz_menu_item">
+                                                                <button class="block_top_button blue_hover_top" type="button" data-ng-click="goToStudy(study)">View</button>
+                                                        </li>
+                                                </ul<>
+                                        </div>
+                                        <div class="small_block_text_area">
+                                                <a class="header_text">{{study.title}}</a>
+						<br>
+						<a class="block_text">{{study.description}}</a>
+                                        </div>
+                                </div>
+                        </div>
+		</div>
 	</div>
 </body>
 </html>

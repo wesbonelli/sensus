@@ -1,15 +1,15 @@
 'use strict';
 
-angular.module('SensusPortal.RegisterResearcherPage', ['ngRoute'])
+angular.module('SensusPortal.CreateAccountPage', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
-  $routeProvider.when('/RegisterResearcherPage', {
-    templateUrl: 'Views/RegisterResearcherPage.html',
-    controller: 'RegisterResearcherPageCtrl'
+  $routeProvider.when('/CreateAccountPage', {
+    templateUrl: 'Views/CreateAccountPage.html',
+    controller: 'CreateAccountPageCtrl'
   });
 }])
 
-.controller('RegisterResearcherPageCtrl', function($scope, $http, $location) {
+.controller('CreateAccountPageCtrl', function($scope, $http, $location) {
 	
         $scope.formData = {};
 
@@ -30,7 +30,7 @@ angular.module('SensusPortal.RegisterResearcherPage', ['ngRoute'])
                 });
         };
 
-        $scope.back = function() {
+        $scope.cancel = function() {
                 $location.path('/LoginPage');
         };
 });

@@ -33,39 +33,40 @@ if (!$handle) {
         exit();
 }
 
-// check and set POST values
-$studyName;
-$studyStartDate;
-$studyEndDate;
-$studyDescription;
-if (empty($_POST['studyName']) || empty($_POST['studyStartDate'] || empty($_POST['studyDescription'])))
+// check and get post values
+if (empty($_POST['studyTitle']) || empty($_POST['studyStartDate'] || empty($_POST['studyDescription'])))
 	$error = array('type' => 'ajax', 'message' => 'missingvalues');
         errorReport(-1, json_encode(array('error' => $error)));
 if(!get_magic_quotes_gpc()) {
-	$studyName = addslashes($_POST['studyName']);
+	$studyTitle = addslashes($_POST['studyTitle']);
 	$studyStartDate = addslashes($_POST['studyStartDate']);
 	$studyEndDate = addslashes($_POST['studyEndDate']);
 	$studyDescription = addslashes($_POST['studyDescription']);
 } else {
-	$studyName = $_POST['studyName'];
+	$studyTitle = $_POST['studyTitle'];
 	$studyStartDate = $_POST['studyStartDate'];
 	$studyEndDate = $_POST['studyEndDate'];
 	$studyDescription = $_POST['studyDescription'];
 }
 
-// build query
+// create study and generate a log entry
 if (empty($_POST['studyEndDate'])) {
-	$query = "INSERT INTO study (name, startdate, description) VALUES ('$studyName', '$studyStartDate', '$studyDescription');";
+	$query = "INSERT INTO study (title, startdate, description) VALUES ('$studyTitle', '$studyStartDate', '$studyDescription');";
 } else {
-	$query = "INSERT INTO study (name, startdate, enddate, description) VALUES ('$studyName', '$studyStartDate', '$studyEndDate', '$studyDescription');";
+	$query = "INSERT INTO study (title, startdate, enddate, description) VALUES ('$studyTitle', '$studyStartDate', '$studyEndDate', '$studyDescription');";
 }
-
-// execute query
 $result = pg_query($handle, $query);
 if (!$result) {
 	$error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
 	exit();
+}
+$query = "INSERT INTO logentry (sourcestudytitle, timestamp, message) VALUES ('$studyTitle', now(), 'Study created.');";
+$result = pg_query($handle, $query);
+if (!$result) {
+        $error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
+        exit();
 }
 
 // close connection

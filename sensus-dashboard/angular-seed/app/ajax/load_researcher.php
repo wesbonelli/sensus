@@ -20,9 +20,7 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
-// get viewed study and participant from session
-$studyTitle = $_SESSION["viewed_study"];
-$participantEmailAddress = $_SESSION["viewed_participant"];
+$researcherEmailAddress = $_SESSION["email_address"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -37,8 +35,8 @@ if (!$handle) {
         exit();
 }
 
-// load participant
-$query = "SELECT id, startdate, enddate FROM participant WHERE studytitle = '$studyTitle' AND emailaddress = '$participantEmailAddress';";
+// load researcher
+$query = "SELECT firstname, lastname FROM researcher WHERE emailaddress = '$researcherEmailAddress';";
 $result = pg_query($handle, $query);
 if ($result) {
         $json = null;

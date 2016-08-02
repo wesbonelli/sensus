@@ -1,32 +1,35 @@
 'use strict';
 
-angular.module('SensusPortal.StudiesPage', ['ngRoute'])
+angular.module('SensusPortal.ParticipantsPage', ['ngRoute'])
 
 .config(['$routeProvider', function($routeProvider) {
-  $routeProvider.when('/StudiesPage', {
-    templateUrl: 'Views/StudiesPage.html',
-    controller: 'StudiesPageCtrl'
+  $routeProvider.when('/ParticipantsPage', {
+    templateUrl: 'Views/ParticipantsPage.html',
+    controller: 'ParticipantsPageCtrl'
   });
 }])
 
-.controller('StudiesPageCtrl', function($scope, $http, $location, $route) {
+.controller('ParticipantsPageCtrl', function($scope, $http, $location, $route) {
 	
 	/* content */
 
-	$scope.user = {
-		'emailAddress' : ''
+        $scope.user = {
+                'emailAddress' : ''
+        };
+
+	$scope.study = {
+		'title' : ''
 	};
 
-	$scope.studies = {
-		'active' : [],
-		'inactive' : [],
-		'message' : ''
-	};
 
-	$scope.logEntries = {
-		'list' : [],
-		'message' : ''
-	};
+	// TODO use two lists, one for active and for inactive. then modify html to have two sections like on StudiesPage
+        $scope.participants = {
+                'list' : [],
+                'message' : '',
+		'active' : 0,
+		'inactive' : 0,
+		'total' : 0
+        };
 
 	/* actions */
 
@@ -51,39 +54,62 @@ angular.module('SensusPortal.StudiesPage', ['ngRoute'])
                 });
 	};
 
-        $scope.loadStudies = function() {
+	$scope.loadStudy = function() {
                 $http({
                         method : 'GET',
-                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_studies.php',
+                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_study.php',
+                        dataType : "json",
+                        context : document.body
+                }).success(function(data) {
+                        if (data.error == null && data.payload != null) {
+                                $scope.study.title = data.payload[0].title;
+                        } else if (data.error != null) {
+                                if (data.error.type == "session") {
+                                        if (data.error.message == "expired" || data.error.message == "doesnotexist") {
+                                                $location.path('/LoginPage');
+                                        }
+                                } else {
+                                        alert(data.error.toString());
+                                }
+                        } else {
+                                alert(data.toString());
+                        }
+                });
+	};
+
+        $scope.loadParticipants = function() {
+                $http({ 
+                        method : 'GET',
+                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_participants.php',
                         dataType : "json",
                         context : document.body
                 }).success(function(data) {
                         if (data.payload == null) {
-                                $scope.studies.message = 'No studies found.';
+                                $scope.participants.message = 'No participants found.';
                         }
                         else if (data.error == null && data.payload != null) {
                                 for (var i = 0; i < data.payload.length; i += 1) {
                                         var startDate = Date.parse(data.payload[i].startdate.toString().split("+")[0]);
                                         var endDate = Date.parse(data.payload[i].enddate.toString().split("+")[0]);
-					if (startDate < Date.now() && endDate > Date.now()) {
-						$scope.studies.active.push({
-                                                	title : data.payload[i].title,
-                                                	startdate : startDate,
-                                                	enddate : endDate,
-							description : data.payload[i].description
-                                        	});
-					} else {
-						$scope.studies.inactive.push({
-							title : data.payload[i].title,
-							startdate : startDate,
-							enddate : endDate,
-							description : data.payload[i].description
-						});
-					}
+                                        $scope.participants.list.push({
+                                                emailAddress : data.payload[i].emailaddress,
+                                                startDate : startDate,
+                                                endDate : endDate,
+						color : startDate < Date.now() && endDate > Date.now() ? 'darkseagreen' : 'indianred'
+                                        });
+                                }
+				$scope.participants.total = $scope.participants.list.length;
+                                for (var i = 0; i < $scope.participants.list.length; i += 1) {
+                                        if ($scope.participants.list[i].color == 'darkseagreen')
+                                                $scope.participants.active += 1;
+                                        if ($scope.participants.list[i].color == 'indianred')
+                                                $scope.participants.inactive += 1;
                                 }
                         } else if (data.error != null) {
-                                if (data.error.type == "session" && data.error.message == "doesnotexist") {
-                                        $location.path('/LoginPage');
+                                if (data.error.type == "session") {
+                                        if (data.error.message == "expired" || data.error.message == "doesnotexist") {
+                                                $location.path('/LoginPage');
+                                        }
                                 } else {
                                         alert(data.error.toString());
                                 }
@@ -93,83 +119,14 @@ angular.module('SensusPortal.StudiesPage', ['ngRoute'])
                 });
         };
 
-        $scope.loadLogEntries = function() {
-                $http({
-                        method : 'GET',
-                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/load_logentries.php',
-                        dataType : "json",
-                        context : document.body
-                }).success(function(data) {
-                        if (data.payload == null) {
-                                $scope.logEntries.message = 'No entries found.';
-                        }
-                        else if (data.error == null && data.payload != null) {
-                                for (var i = 0; i < data.payload.length; i += 1) {
-                                        $scope.logEntries.list.push({
-                                                sourceStudyTitle : data.payload[i].sourcestudytitle,
-                                                sourceParticipantEmailAddress : data.payload[i].sourceparticipantemailaddress,
-                                                timestamp : Date.parse(data.payload[i].timestamp.toString().split("+")[0]).toString(),
-                                                message : data.payload[i].message,
-                                        });
-                                }
-                        } else if (data.error != null) {
-                                if (data.error.type == "session" && data.error.message == "doesnotexist") {
-                                        $location.path('/LoginPage');
-                                } else {
-                                        alert(data.error.toString());
-                                }
-                        } else {
-                                alert (data.toString());
-                        }
-                });
-        };
-
-        $scope.refreshLogEntries = function() {
-                $scope.logEntries = {
-                        'list' : [],
-                        'message' : ''
-                };
-                $scope.loadLogEntries();
-        };
-
-	$scope.refreshStudies = function() {
-		$scope.studies = {
-			'active' : [],
-			'inactive' : [],
-			'message' : ''
-		};
-		$scope.loadStudies();
-	};
-
-	$scope.viewLogEntry = function(logEntry) {
-                var data = '';
-                data += 'viewed_logentry=' + logEntry.timestamp;
-                $http({
-                        method  : 'POST',
-                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/update_session_information.php',
-                        data    : data,
-                        headers : { 'Content-type': 'application/x-www-form-urlencoded' },
-                }).success(function(data) {
-                        if (data.error == null) {
-                                $location.path('/LogEntryPage');
-                        } else {
-                                if (data.error.type == "session" && data.error.message == "doesnotexist") {
-                                        $location.path('/LoginPage');
-                                } else {
-                                        alert(data.error.toString());
-                                }
-                        }
-                });
-        };
-
 	/* when page loads */
 
-        $(document).ready(function() {
-		$scope.loadUser();
-		$scope.loadStudies();
-		$scope.loadLogEntries();
-        });
-        
+	$(document).ready(function () {
+                $scope.loadUser();
+		$scope.loadStudy();
+		$scope.loadParticipants();
+	});
+
 	/* navigation */
 
 	$scope.goToAccount = function() {
@@ -199,11 +156,11 @@ angular.module('SensusPortal.StudiesPage', ['ngRoute'])
                 $location.path('/CreateStudyPage');
         };
 
-	$scope.goToLogEntries = function() {
+        $scope.goToLogEntries = function() {
                 $location.path('/LogEntriesPage');
         };
 
-        $scope.goToLogEntry = function(logEntry) {
+	$scope.goToLogEntry = function(logEntry) {
                 var data = '';
                 data += 'logEntryTimestamp=' + logEntry.timestamp;
                 $http({
@@ -229,24 +186,7 @@ angular.module('SensusPortal.StudiesPage', ['ngRoute'])
         };
 
         $scope.goToStudy = function(study) {
-		var data = '';
-                data += 'viewedStudy=' + study.title;
-                $http({
-                        method  : 'POST',
-                        url : 'http://ec2-54-227-229-48.compute-1.amazonaws.com/app/ajax/update_session_information.php',
-                        data    : data,
-                        headers : { 'Content-type': 'application/x-www-form-urlencoded' },
-                }).success(function(data) {
-                        if (data.error == null) {
-                                $location.path('/StudyPage');
-                        } else {
-                                if (data.error.type == "session" && data.error.message == "doesnotexist") {
-                                        $location.path('/LoginPage');
-                                } else {
-                                        alert(data.error.toString());
-                                }
-                        }
-                });
+                $location.path('/StudyPage');
         };
 
         $scope.goToDetails = function() {
@@ -257,11 +197,11 @@ angular.module('SensusPortal.StudiesPage', ['ngRoute'])
                 $location.path('/DeploymentPage');
         };
 
-	$scope.goToParticipants = function() {
-                $location.path('/StudyParticipantsPage');
+        $scope.goToParticipants = function() {
+                $location.path('/ParticipantsPage');
         };
 
-        $scope.goToParticipant = function(participant) {
+	$scope.goToParticipant = function(participant) {
                 var data = '';
                 data += 'viewedParticipant=' + participant.emailAddress;
                 $http({
