@@ -80,6 +80,8 @@
 			<div class="body_section inner">
 				<div class="horiz_auto_block">
 					<div class="block_text_area">
+						<a class="header_text">Overview</a>
+                                                <br>
 						<a class="block_text">Starts: </a>
 						<a class="block_text" ng-bind="studyDetails.startDate | date:'MM/dd/yyyy'"></a>
 						<br>
@@ -87,6 +89,13 @@
 						<a class="block_text" ng-bind="studyDetails.endDate | date: 'MM/dd/yyyy'"></a>
 						<br>
 						<a class="block_text">{{studyDetails.description}}</a>
+						<br>
+						<a class="header_text">Researchers</a>
+                                                <br>
+						<a class="header_text">Goals</a>
+                                                <br>
+						<a class="header_text">Hypotheses</a>
+                                                <br>
 					</div>
 				</div>
 			</div>
@@ -144,6 +153,8 @@
 			<div class="body_section inner">
 				<div class="horiz_auto_block">
 					<div class="block_text_area">
+						<a class="header_text">Statistics</a>
+						<br>
 						<a class="block_text">Total participants: {{studyParticipants.total}}</a>
 						<br>
 						<a class="block_text">Active participants: {{studyParticipants.active.length}}</a>
