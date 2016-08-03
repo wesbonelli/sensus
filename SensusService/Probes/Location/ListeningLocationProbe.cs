@@ -29,7 +29,7 @@ namespace SensusService.Probes.Location
         {
             get
             {
-                return false;
+                return true;
             }
         }
 
@@ -38,7 +38,7 @@ namespace SensusService.Probes.Location
         {
             get
             {
-                return "This setting does not affect iOS or Android.";
+                return "This setting does not affect iOS. Android devices will use additional power to report all updates.";
             }
         }
 
@@ -47,7 +47,7 @@ namespace SensusService.Probes.Location
         {
             get
             {
-                return "This setting does not affect iOS or Android.";
+                return "This setting does not affect iOS. Android devices will sleep and pause updates.";
             }
         }
 
@@ -63,11 +63,11 @@ namespace SensusService.Probes.Location
 
         public ListeningLocationProbe()
         {
-            _positionChangedHandler = (o, e) =>
+            _positionChangedHandler = async (o, e) =>
             {
                 SensusServiceHelper.Get().Logger.Log("Received position change notification.", LoggingLevel.Verbose, GetType());
 
-                StoreDatum(new LocationDatum(e.Position.Timestamp, e.Position.Accuracy, e.Position.Latitude, e.Position.Longitude));
+                await StoreDatumAsync(new LocationDatum(e.Position.Timestamp, e.Position.Accuracy, e.Position.Latitude, e.Position.Longitude));
             };
         }
 
