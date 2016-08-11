@@ -49,6 +49,7 @@ namespace SensusService.Probes.User
         private int _numScriptsAgedOut;
         private List<Tuple<DateTime, DateTime>> _randomTriggerWindows;
         private string _randomTriggerCallbackId;
+        private List<String> _randomTriggerCallbackIds;
         private Random _random;
         private List<DateTime> _runTimes;
         private List<DateTime> _completionTimes;
@@ -337,6 +338,7 @@ namespace SensusService.Probes.User
             _numScriptsAgedOut = 0;
             _randomTriggerWindows = new List<Tuple<DateTime, DateTime>>();
             _randomTriggerCallbackId = null;
+            _randomTriggerCallbackIds = new List<String>();
             _random = new Random();
             _runTimes = new List<DateTime>();
             _completionTimes = new List<DateTime>();
@@ -529,7 +531,25 @@ namespace SensusService.Probes.User
                         triggerWindowStart = new DateTime(now.Year, now.Month, now.Day, randomTriggerWindow.Item1.Hour, randomTriggerWindow.Item1.Minute, 0);
                         triggerWindowEnd = new DateTime(now.Year, now.Month, now.Day, randomTriggerWindow.Item2.Hour, randomTriggerWindow.Item2.Minute, 0);
                         foundTriggerWindow = true;
-                        break;
+                         //break;
+
+                        _randomTriggerCallbackIds.Add(SensusServiceHelper.Get().ScheduleOneTimeCallback(new ScheduledCallback((callbackId, cancellationToken, letDeviceSleepCallback) =>
+                            {
+                                return Task.Run(() =>
+                                    {
+                                        // if the probe is still running and the runner is enabled, run a copy of the script so that we can retain a pristine version of the original.
+                                        // also, when the script prompts display let the caller know that it's okay for the device to sleep.
+                                        if (_probe.Running && _enabled)
+                                        {
+                                            Run(_script.Copy(), postDisplayCallback: letDeviceSleepCallback);
+
+                                            // establish the next random trigger callback
+                                            StartRandomTriggerCallbacks();
+                                        }
+                                    });
+
+                            }, "Trigger Randomly", null, userNotificationMessage),
+                            ((int)((triggerWindowStart.AddSeconds(_random.NextDouble() * (triggerWindowEnd - triggerWindowStart).TotalSeconds)) - now).TotalMilliseconds)));
                     }
                 }
 
@@ -541,28 +561,30 @@ namespace SensusService.Probes.User
                     triggerWindowEnd = new DateTime(now.Year, now.Month, now.Day, firstRandomTriggerWindow.Item2.Hour, firstRandomTriggerWindow.Item2.Minute, 0).AddDays(1);
                 }
 
+
+
                 // schedule callback for random offset into trigger window
-                DateTime triggerTime = triggerWindowStart.AddSeconds(_random.NextDouble() * (triggerWindowEnd - triggerWindowStart).TotalSeconds);
-                int triggerDelayMS = (int)(triggerTime - now).TotalMilliseconds;
+                //DateTime triggerTime = triggerWindowStart.AddSeconds(_random.NextDouble() * (triggerWindowEnd - triggerWindowStart).TotalSeconds);
+                //int triggerDelayMS = (int)(triggerTime - now).TotalMilliseconds;
 
-                ScheduledCallback callback = new ScheduledCallback((callbackId, cancellationToken, letDeviceSleepCallback) =>
-                    {
-                        return Task.Run(() =>
-                            {
-                                // if the probe is still running and the runner is enabled, run a copy of the script so that we can retain a pristine version of the original.
-                                // also, when the script prompts display let the caller know that it's okay for the device to sleep.
-                                if (_probe.Running && _enabled)
-                                {
-                                    Run(_script.Copy(), postDisplayCallback: letDeviceSleepCallback);
+                //ScheduledCallback callback = new ScheduledCallback((callbackId, cancellationToken, letDeviceSleepCallback) =>
+                //    {
+                //        return Task.Run(() =>
+                //            {
+                //                // if the probe is still running and the runner is enabled, run a copy of the script so that we can retain a pristine version of the original.
+                //                // also, when the script prompts display let the caller know that it's okay for the device to sleep.
+                //                if (_probe.Running && _enabled)
+                //                {
+                //                    Run(_script.Copy(), postDisplayCallback: letDeviceSleepCallback);
 
-                                    // establish the next random trigger callback
-                                    StartRandomTriggerCallbacks();
-                                }
-                            });
+                //                    // establish the next random trigger callback
+                //                    StartRandomTriggerCallbacks();
+                //                }
+                //            });
 
-                    }, "Trigger Randomly", null, userNotificationMessage);
+                //    }, "Trigger Randomly", null, userNotificationMessage);
 
-                _randomTriggerCallbackId = SensusServiceHelper.Get().ScheduleOneTimeCallback(callback, triggerDelayMS);
+                //_randomTriggerCallbackId = SensusServiceHelper.Get().ScheduleOneTimeCallback(callback, triggerDelayMS);
             }
         }
 

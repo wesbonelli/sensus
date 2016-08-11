@@ -341,6 +341,8 @@ namespace SensusService.Probes
             MostRecentDatum = datum;
             _mostRecentStoreTimestamp = DateTimeOffset.UtcNow;
 
+            Console.WriteLine("........................" + datum.GetType().ToString() + ":" + datum.DeviceId.ToString());
+
             // datum is allowed to be null, indicating the the probe attempted to obtain data but it didn't find any (in the case of polling probes).
             if (datum != null)
             {
