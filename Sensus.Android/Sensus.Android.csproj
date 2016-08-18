@@ -54,7 +54,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <CustomCommands>
       <CustomCommands>
-        <Command type="BeforeBuild" command="touch Assets/UnitTestingProtocol.json" workingdir="${ProjectDir}" externalConsole="True" />
+        <Command type="BeforeBuild" command="touch Assets/UnitTestingProtocol.json" workingdir="${ProjectDir}" />
       </CustomCommands>
     </CustomCommands>
   </PropertyGroup>
@@ -314,7 +314,6 @@
     <Compile Include="AndroidSensusServiceHelper.cs" />
     <Compile Include="AndroidSensusServiceBootStarter.cs" />
     <Compile Include="AndroidTextToSpeech.cs" />
-    <Compile Include="AndroidExportRendererFix.cs" />
     <Compile Include="AndroidMainActivity.cs" />
     <Compile Include="Probes\Context\AndroidBluetoothBroadcastReceiver.cs" />
     <Compile Include="Probes\Communication\AndroidTelephonyOutgoingBroadcastReceiver.cs" />
