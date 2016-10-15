@@ -41,6 +41,7 @@ namespace SensusService
         private static string HEALTH_TEST_CALLBACK_ID;
         private const int HEALTH_TEST_DELAY_MS = 60000;
         private static readonly object HEALTH_TEST_LOCKER = new object();
+        private static bool REENABLE_BLUETOOTH_IF_NEEDED = true;
 
         private static List<MicrosoftBandProbeBase> BandProbesThatShouldBeRunning
         {
@@ -131,15 +132,17 @@ namespace SensusService
                             // otherwise, attempt to connect
                             else
                             {
-                                int connectAttemptsLeft = BAND_CLIENT_CONNECT_ATTEMPTS;
+                                int connectAttempt = 0;
 
-                                while (connectAttemptsLeft-- > 0 && (BandClient == null || !BandClient.IsConnected))
+                                while (++connectAttempt <= BAND_CLIENT_CONNECT_ATTEMPTS && (BandClient == null || !BandClient.IsConnected))
                                 {
+                                    SensusServiceHelper.Get().Logger.Log("Connect attempt " + connectAttempt + " of " + BAND_CLIENT_CONNECT_ATTEMPTS + ".", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+
                                     BandClientManager bandManager = BandClientManager.Instance;
                                     BandDeviceInfo band = (await bandManager.GetPairedBandsAsync()).FirstOrDefault();
                                     if (band == null)
                                     {
-                                        SensusServiceHelper.Get().Logger.Log("No Bands connected. Retrying...", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                                        SensusServiceHelper.Get().Logger.Log("No paired Bands.", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
                                         Thread.Sleep(BAND_CLIENT_CONNECT_TIMEOUT_MS);
                                     }
                                     else
@@ -149,7 +152,7 @@ namespace SensusService
                                         if (await Task.WhenAny(connectTask, Task.Delay(BAND_CLIENT_CONNECT_TIMEOUT_MS)) == connectTask)
                                             BandClient = await connectTask;
                                         else
-                                            SensusServiceHelper.Get().Logger.Log("Timed out while connecting. Retrying...", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                                            SensusServiceHelper.Get().Logger.Log("Timed out.", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
                                     }
                                 }
 
@@ -177,7 +180,7 @@ namespace SensusService
                         }
                         catch (Exception ex)
                         {
-                            SensusServiceHelper.Get().Logger.Log("Failed to connect to Microsoft Band:  " + ex.Message, LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                            SensusServiceHelper.Get().Logger.Log("Failed to connect to Band:  " + ex.Message, LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
                         }
                         finally
                         {
@@ -191,7 +194,7 @@ namespace SensusService
             BAND_CLIENT_CONNECT_WAIT.WaitOne();
 
             if (BandClient == null || !BandClient.IsConnected)
-                throw new MicrosoftBandClientConnectException("Failed to connect to Microsoft Band.");
+                throw new MicrosoftBandClientConnectException("Failed to connect to Band.");
         }
 
         public static Task TestBandClientAsync(string callbackId, CancellationToken cancellationToken, Action letDeviceSleepCallback)
@@ -209,10 +212,31 @@ namespace SensusService
                 try
                 {
                     ConnectClient();
+
+                    // we've successfully connected. if we fail at some point in the future, allow the system to reenable bluetooth.
+                    REENABLE_BLUETOOTH_IF_NEEDED = true;
                 }
                 catch (Exception ex)
                 {
-                    SensusServiceHelper.Get().Logger.Log("Failed to connect Band client:  " + ex.Message, LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                    SensusServiceHelper.Get().Logger.Log("Band client failed to connect:  " + ex.Message, LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+
+                    // we failed to connect. try reenabling bluetooth if we haven't already tried.
+                    if (REENABLE_BLUETOOTH_IF_NEEDED)
+                    {
+                        SensusServiceHelper.Get().Logger.Log("Reenabling Bluetooth...", LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                        try
+                        {
+                            SensusServiceHelper.Get().DisableBluetooth(true, true, "Sensus uses Bluetooth to collect data from your Microsoft Band, which is being used in one of your studies.");
+                        }
+                        catch (Exception reenableException)
+                        {
+                            SensusServiceHelper.Get().Logger.Log("Failed to reenable Bluetooth:  " + reenableException.Message, LoggingLevel.Normal, typeof(MicrosoftBandProbeBase));
+                        }
+                        finally
+                        {
+                            REENABLE_BLUETOOTH_IF_NEEDED = false;
+                        }
+                    }
                 }
 
                 // it's possible that the device was re-paired, resulting in the client being connected but the

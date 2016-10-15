@@ -58,6 +58,12 @@ namespace SensusService.Probes.User.Scripts
             get { return _inputGroups; }
         }
 
+        /// <summary>
+        /// Time at which the script was run. On Android this happens in the background at the scheduled/triggered
+        /// time. On iOS this is the triggering time (for trigger-based scripts), and the time that the 
+        /// UILocalNotification appears in the notifications tray (for scheduled scripts).
+        /// </summary>
+        /// <value>The run timestamp.</value>
         public DateTimeOffset? RunTimestamp
         {
             get { return _runTimestamp; }
@@ -98,27 +104,37 @@ namespace SensusService.Probes.User.Scripts
             _inputGroups = new ObservableCollection<InputGroup>();
         }
 
-        public bool SameOrigin(Script script)
+        /// <summary>
+        /// Checks whether the current and another script share a parent script.
+        /// </summary>
+        /// <returns><c>true</c>, if parent script is shared, <c>false</c> otherwise.</returns>
+        /// <param name="script">Script.</param>
+        public bool SharesParentScriptWith(Script script)
         {
             return _runner.Script.Id == script.Runner.Script.Id;
         }
 
         public Script Copy()
         {
-            // don't copy the runner
-            ScriptRunner runner = _runner;
-            _runner = null;
+            // multiple threads can call into copy, and we're going to temporarily set _runner = null below. without a lock
+            // we have a race condition where a second caller could set runner = _runner (null).
+            lock (this)
+            {
+                // don't copy the runner object. we want the copy to share the same runner reference.
+                ScriptRunner runner = _runner;
+                _runner = null;
 
-            Script copy = JsonConvert.DeserializeObject<Script>(JsonConvert.SerializeObject(this, SensusServiceHelper.JSON_SERIALIZER_SETTINGS), SensusServiceHelper.JSON_SERIALIZER_SETTINGS);
+                Script copy = JsonConvert.DeserializeObject<Script>(JsonConvert.SerializeObject(this, SensusServiceHelper.JSON_SERIALIZER_SETTINGS), SensusServiceHelper.JSON_SERIALIZER_SETTINGS);
 
-            // a new GUID is set within the constructor, but it is immediately overwritten with the old id by the JSON deserializer. since the
-            // script id is what ties all of the script datum objects together, set a new unique script id here.
-            copy.Id = Guid.NewGuid().ToString();
+                // a new GUID is set within the constructor, but it is immediately overwritten with the old id by the JSON deserializer. since the
+                // script id is what ties all of the script datum objects together, set a new unique script id here.
+                copy.Id = Guid.NewGuid().ToString();
 
-            // set the runner within the current and copied scripts
-            _runner = copy.Runner = runner;
+                // set the runner within the current and copied scripts
+                _runner = copy.Runner = runner;
 
-            return copy;
+                return copy;
+            }
         }
     }
 }

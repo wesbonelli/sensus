@@ -36,6 +36,7 @@ using ZXing.Mobile;
 using Android.Graphics;
 using Android.Media;
 using Android.Bluetooth;
+using Sensus.Android.Probes.Context;
 
 namespace Sensus.Android
 {
@@ -70,9 +71,9 @@ namespace Sensus.Android
             get
             {
                 // https://github.com/predictive-technology-laboratory/sensus/wiki/Backwards-Compatibility
-#if __ANDROID_23__
-                if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
-                    return _connectivityManager.GetAllNetworks().Select(network => _connectivityManager.GetNetworkInfo(network)).Any(networkInfo => networkInfo.Type == ConnectivityType.Wifi && networkInfo.IsConnected);  // API level 23
+#if __ANDROID_21__
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop)
+                    return _connectivityManager.GetAllNetworks().Select(network => _connectivityManager.GetNetworkInfo(network)).Any(networkInfo => networkInfo != null && networkInfo.Type == ConnectivityType.Wifi && networkInfo.IsConnected);  // API level 21
                 else
 #endif
                 {
@@ -157,16 +158,28 @@ namespace Sensus.Android
             if (_service == null)
             {
                 if (_connectivityManager != null)
+                {
                     _connectivityManager.Dispose();
+                    _connectivityManager = null;
+                }
 
                 if (_notificationManager != null)
+                {
                     _notificationManager.Dispose();
+                    _notificationManager = null;
+                }
 
                 if (_textToSpeech != null)
+                {
                     _textToSpeech.Dispose();
+                    _textToSpeech = null;
+                }
 
                 if (_wakeLock != null)
+                {
                     _wakeLock.Dispose();
+                    _wakeLock = null;
+                }
             }
             else
             {
@@ -283,43 +296,45 @@ namespace Sensus.Android
         public override void PromptForAndReadTextFileAsync(string promptTitle, Action<string> callback)
         {
             new Thread(() =>
+            {
+                try
                 {
-                    try
-                    {
-                        Intent intent = new Intent(Intent.ActionGetContent);
-                        intent.SetType("*/*");
-                        intent.AddCategory(Intent.CategoryOpenable);
+                    Intent intent = new Intent(Intent.ActionGetContent);
+                    intent.SetType("*/*");
+                    intent.AddCategory(Intent.CategoryOpenable);
 
-                        RunActionUsingMainActivityAsync(mainActivity =>
+                    RunActionUsingMainActivityAsync(mainActivity =>
+                    {
+                        mainActivity.GetActivityResultAsync(intent, AndroidActivityResultRequestCode.PromptForFile, result =>
+                        {
+                            if (result != null && result.Item1 == Result.Ok)
                             {
-                                mainActivity.GetActivityResultAsync(intent, AndroidActivityResultRequestCode.PromptForFile, result =>
+                                try
+                                {
+                                    using (StreamReader file = new StreamReader(_service.ContentResolver.OpenInputStream(result.Item2.Data)))
                                     {
-                                        if (result != null && result.Item1 == Result.Ok)
-                                            try
-                                            {
-                                                using (StreamReader file = new StreamReader(_service.ContentResolver.OpenInputStream(result.Item2.Data)))
-                                                {
-                                                    callback(file.ReadToEnd());
-                                                }
-                                            }
-                                            catch (Exception ex)
-                                            {
-                                                FlashNotificationAsync("Error reading text file:  " + ex.Message);
-                                            }
-                                    });
+                                        callback(file.ReadToEnd());
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    FlashNotificationAsync("Error reading text file:  " + ex.Message);
+                                }
+                            }
+                        });
 
-                            }, true, false);
-                    }
-                    catch (ActivityNotFoundException)
-                    {
-                        FlashNotificationAsync("Please install a file manager from the Apps store.");
-                    }
-                    catch (Exception ex)
-                    {
-                        FlashNotificationAsync("Something went wrong while prompting you for a file to read:  " + ex.Message);
-                    }
+                    }, true, false);
+                }
+                catch (ActivityNotFoundException)
+                {
+                    FlashNotificationAsync("Please install a file manager from the Apps store.");
+                }
+                catch (Exception ex)
+                {
+                    FlashNotificationAsync("Something went wrong while prompting you for a file to read:  " + ex.Message);
+                }
 
-                }).Start();
+            }).Start();
         }
 
         public override void ShareFileAsync(string path, string subject, string mimeType)
@@ -357,16 +372,16 @@ namespace Sensus.Android
         public override void SendEmailAsync(string toAddress, string subject, string message)
         {
             RunActionUsingMainActivityAsync(mainActivity =>
-                {
-                    Intent emailIntent = new Intent(Intent.ActionSend);
-                    emailIntent.PutExtra(Intent.ExtraEmail, new string[] { toAddress });
-                    emailIntent.PutExtra(Intent.ExtraSubject, subject);
-                    emailIntent.PutExtra(Intent.ExtraText, message);
-                    emailIntent.SetType("text/plain");
+            {
+                Intent emailIntent = new Intent(Intent.ActionSend);
+                emailIntent.PutExtra(Intent.ExtraEmail, new string[] { toAddress });
+                emailIntent.PutExtra(Intent.ExtraSubject, subject);
+                emailIntent.PutExtra(Intent.ExtraText, message);
+                emailIntent.SetType("text/plain");
 
-                    mainActivity.StartActivity(emailIntent);
+                mainActivity.StartActivity(emailIntent);
 
-                }, true, false);
+            }, true, false);
         }
 
         public override void TextToSpeechAsync(string text, Action callback)
@@ -578,7 +593,7 @@ namespace Sensus.Android
             // ensure that the device has the required feature
             if (!_service.PackageManager.HasSystemFeature(lowEnergy ? PackageManager.FeatureBluetoothLe : PackageManager.FeatureBluetooth))
             {
-                FlashNotificationAsync("This device does not have the Bluetooth " + (lowEnergy ? "Low Energy" : "") + " feature.", true);
+                FlashNotificationAsync("This device does not have Bluetooth " + (lowEnergy ? "Low Energy" : "") + ".", true);
                 return enabled;
             }
 
@@ -594,7 +609,7 @@ namespace Sensus.Android
                     enableWait.Set();
                 else
                 {
-                    // bring up sensus
+                    // bring up sensus so we can request bluetooth enable
                     RunActionUsingMainActivityAsync(mainActivity =>
                     {
                         mainActivity.RunOnUiThread(async () =>
@@ -615,7 +630,6 @@ namespace Sensus.Android
 
                                     enableWait.Set();
                                 });
-
                             }
                             catch (Exception ex)
                             {
@@ -639,6 +653,95 @@ namespace Sensus.Android
                 _userDeniedBluetoothEnable = false;
 
             return enabled;
+        }
+
+        public override bool DisableBluetooth(bool reenable, bool lowEnergy = true, string rationale = null)
+        {
+            base.DisableBluetooth(reenable, lowEnergy, rationale);
+
+            // check whether bluetooth is enabled
+            BluetoothManager bluetoothManager = _service.GetSystemService(Context.BluetoothService) as BluetoothManager;
+            BluetoothAdapter bluetoothAdapter = bluetoothManager.Adapter;
+            if (bluetoothAdapter != null && bluetoothAdapter.IsEnabled)
+            {
+                ManualResetEvent disableWait = new ManualResetEvent(false);
+                ManualResetEvent enableWait = new ManualResetEvent(false);
+
+                EventHandler<global::Android.Bluetooth.State> StateChangedHandler = (sender, newState) =>
+                {
+                    if (newState == global::Android.Bluetooth.State.Off)
+                        disableWait.Set();
+                    else if (newState == global::Android.Bluetooth.State.On)
+                        enableWait.Set();
+                };
+
+                AndroidBluetoothBroadcastReceiver.STATE_CHANGED += StateChangedHandler;
+
+                try
+                {
+                    if (!bluetoothAdapter.Disable())
+                        disableWait.Set();
+                }
+                catch (Exception)
+                {
+                    disableWait.Set();
+                }
+
+                disableWait.WaitOne(5000);
+
+                if (reenable)
+                {
+                    try
+                    {
+                        if (!bluetoothAdapter.Enable())
+                            enableWait.Set();
+                    }
+                    catch (Exception)
+                    {
+                        enableWait.Set();
+                    }
+
+                    enableWait.WaitOne(5000);
+                }
+
+                AndroidBluetoothBroadcastReceiver.STATE_CHANGED -= StateChangedHandler;
+            }
+
+            bool isEnabled = bluetoothAdapter?.IsEnabled ?? false;
+
+            // dispatch an intent to reenable bluetooth, which will require user interaction
+            if (reenable && !isEnabled)
+                return EnableBluetooth(lowEnergy, rationale);
+            else
+                return isEnabled;
+        }
+
+        /// <summary>
+        /// Runs an action on the main thread. Should not be called directly. See SensusServiceHelper.RunOnMainThread.
+        /// </summary>
+        /// <param name="action">Action.</param>
+        protected override void RunOnMainThreadNative(Action action)
+        {
+            // we'll deadlock below if we're currently on the main thread.
+            AssertNotOnMainThread("Run on main thread.");
+
+            // sensus does not always have an activity, so use the handler on the service to run 
+            // things on the UI thread.
+            ManualResetEvent runWait = new ManualResetEvent(false);
+
+            _service.MainThreadHandler.Post(() =>
+            {
+                try
+                {
+                    action();
+                }
+                finally
+                {
+                    runWait.Set();
+                }
+            });
+
+            runWait.WaitOne();
         }
 
         #endregion
@@ -667,6 +770,11 @@ namespace Sensus.Android
             callbackIntent.PutExtra(SENSUS_CALLBACK_REPEATING_KEY, repeating);
             callbackIntent.PutExtra(SENSUS_CALLBACK_REPEAT_DELAY_KEY, repeatDelayMS);
             callbackIntent.PutExtra(SENSUS_CALLBACK_REPEAT_LAG_KEY, repeatLag);
+
+            // add the notification id if there is one
+            string notificationId = GetCallbackNotificationId(callbackId);
+            if (notificationId != null)
+                callbackIntent.PutExtra(NOTIFICATION_ID_KEY, notificationId);
 
             return CreateCallbackPendingIntent(callbackIntent);
         }

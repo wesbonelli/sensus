@@ -329,6 +329,9 @@ namespace SensusService
         private MobileBarcodeScanner _barcodeScanner;
         private ZXing.Mobile.BarcodeWriter _barcodeWriter;
         private bool _flashNotificationsEnabled;
+
+        // we use the following observable collection in ListViews within Sensus. this is not thread-safe,
+        // so any write operations involving this collection should be performed on the UI thread.
         private ObservableCollection<Script> _scriptsToRun;
 
         private readonly object _shareFileLocker = new object();
@@ -603,6 +606,14 @@ namespace SensusService
             return hashBuilder.ToString();
         }
 
+        public void RunOnMainThread(Action action)
+        {
+            if (IsOnMainThread)
+                action();
+            else
+                RunOnMainThreadNative(action);
+        }
+
         #region platform-specific methods. this functionality cannot be implemented in a cross-platform way. it must be done separately for each platform.
 
         protected abstract void InitializeXamarinInsights();
@@ -657,6 +668,21 @@ namespace SensusService
             }
         }
 
+        public virtual bool DisableBluetooth(bool reenable, bool lowEnergy, string rationale)
+        {
+            try
+            {
+                AssertNotOnMainThread(GetType() + " DisableBluetooth");
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        protected abstract void RunOnMainThreadNative(Action action);
+
         #endregion
 
         #region add/remove running protocol ids
@@ -670,16 +696,18 @@ namespace SensusService
 
                 if (_healthTestCallbackId == null)
                 {
-                    ScheduledCallback callback = new ScheduledCallback(async (callbackId, cancellationToken, letDeviceSleepCallback) =>
+                    ScheduledCallback healthTestCallback = new ScheduledCallback(async (callbackId, cancellationToken, letDeviceSleepCallback) =>
                     {
                         List<Protocol> protocolsToTest = new List<Protocol>();
 
-                        // we've already got a lock on running protocol IDs. just need a lock on the protocols.
                         lock (_registeredProtocols)
                         {
-                            foreach (Protocol protocol in _registeredProtocols)
-                                if (_runningProtocolIds.Contains(protocol.Id))
-                                    protocolsToTest.Add(protocol);
+                            lock (_runningProtocolIds)
+                            {
+                                foreach (Protocol protocol in _registeredProtocols)
+                                    if (_runningProtocolIds.Contains(protocol.Id))
+                                        protocolsToTest.Add(protocol);
+                            }
                         }
 
                         foreach (Protocol protocolToTest in protocolsToTest)
@@ -694,7 +722,7 @@ namespace SensusService
 
                     }, "Test Health", TimeSpan.FromMinutes(1));
 
-                    _healthTestCallbackId = ScheduleRepeatingCallback(callback, HEALTH_TEST_DELAY_MS, HEALTH_TEST_DELAY_MS, HEALTH_TEST_REPEAT_LAG);
+                    _healthTestCallbackId = ScheduleRepeatingCallback(healthTestCallback, HEALTH_TEST_DELAY_MS, HEALTH_TEST_DELAY_MS, HEALTH_TEST_REPEAT_LAG);
                 }
             }
         }
@@ -797,19 +825,19 @@ namespace SensusService
 
         public void AddScriptToRun(Script script, RunMode runMode)
         {
-            lock (_scriptsToRun)
+            RunOnMainThread(() =>
             {
                 bool add = true;
 
-                List<Script> scriptsWithSameOrigin = _scriptsToRun.Where(s => s.SameOrigin(script)).ToList();
+                List<Script> scriptsWithSameParent = _scriptsToRun.Where(s => s.SharesParentScriptWith(script)).ToList();
 
-                if (scriptsWithSameOrigin.Count > 0)
+                if (scriptsWithSameParent.Count > 0)
                 {
                     if (runMode == RunMode.SingleKeepOldest)
                         add = false;
                     else if (runMode == RunMode.SingleUpdate)
-                        foreach (Script scriptWithSameOrigin in scriptsWithSameOrigin)
-                            _scriptsToRun.Remove(scriptWithSameOrigin);
+                        foreach (Script scriptWithSameParent in scriptsWithSameParent)
+                            _scriptsToRun.Remove(scriptWithSameParent);
                 }
 
                 if (add)
@@ -817,21 +845,21 @@ namespace SensusService
                     _scriptsToRun.Insert(0, script);
                     IssuePendingSurveysNotificationAsync(true, true);
                 }
-            }
+            });
         }
 
         public void RemoveScriptToRun(Script script)
         {
-            lock (_scriptsToRun)
+            RunOnMainThread(() =>
             {
                 if (_scriptsToRun.Remove(script))
                     IssuePendingSurveysNotificationAsync(false, false);
-            }
+            });
         }
 
         public void RemoveScriptsToRun(ScriptRunner runner)
         {
-            lock (_scriptsToRun)
+            RunOnMainThread(() =>
             {
                 bool removed = false;
 
@@ -841,26 +869,28 @@ namespace SensusService
 
                 if (removed)
                     IssuePendingSurveysNotificationAsync(false, false);
-            }
+            });
         }
 
-        public void RemoveOldScripts()
+        public void RemoveOldScripts(bool issueNotification)
         {
-            lock (_scriptsToRun)
+            RunOnMainThread(() =>
             {
                 bool removed = false;
 
                 foreach (Script script in _scriptsToRun.ToList())
-                    if (script.Age.TotalMinutes >= script.Runner.MaximumAgeMinutes && _scriptsToRun.Remove(script))
+                    if (script.Runner.MaximumAgeMinutes.HasValue && script.Age.TotalMinutes >= script.Runner.MaximumAgeMinutes && _scriptsToRun.Remove(script))
                         removed = true;
 
-                if (removed)
+                if (removed && issueNotification)
                     IssuePendingSurveysNotificationAsync(false, false);
-            }
+            });
         }
 
         public void IssuePendingSurveysNotificationAsync(bool playSound, bool vibrate)
         {
+            RemoveOldScripts(false);
+
             string message = null;
 
             int scriptsToRun = _scriptsToRun.Count;
@@ -924,6 +954,17 @@ namespace SensusService
             {
                 if (_idCallback.ContainsKey(callbackId))
                     return _idCallback[callbackId].UserNotificationMessage;
+                else
+                    return null;
+            }
+        }
+
+        public string GetCallbackNotificationId(string callbackId)
+        {
+            lock (_idCallback)
+            {
+                if (_idCallback.ContainsKey(callbackId))
+                    return _idCallback[callbackId].NotificationId;
                 else
                     return null;
             }
@@ -1208,10 +1249,10 @@ namespace SensusService
                                 // only run the post-display callback the first time a page is displayed. the caller expects the callback
                                 // to fire only once upon first display.
                                 voiceInput.RunAsync(firstPromptTimestamp, firstPageDisplay ? postDisplayCallback : null, response =>
-                                    {
-                                        firstPageDisplay = false;
-                                        responseWait.Set();
-                                    });
+                                {
+                                    firstPageDisplay = false;
+                                    responseWait.Set();
+                                });
                             }
                             else
                                 responseWait.Set();
@@ -1220,7 +1261,7 @@ namespace SensusService
                         {
                             BringToForeground();
 
-                            Device.BeginInvokeOnMainThread(async () =>
+                            RunOnMainThread(async () =>
                             {
                                 // catch any exceptions from preparing and displaying the prompts page
                                 try
@@ -1280,16 +1321,16 @@ namespace SensusService
                                     });
 
                                     // do not display prompts page under the following conditions:  1) there are no inputs displayed on it. 2) the cancellation 
-                                    // token has requested a cancellation. if any of these conditions are true, set the wait handle and continue to the next input group.
+                                    // token has requested a cancellation. if either of these conditions is true, set the wait handle and continue to the next input group.
                                     if (promptForInputsPage.DisplayedInputCount == 0)
                                     {
                                         // if we're on the final input group and no inputs were shown, then we're at the end and we're ready to submit the 
                                         // users' responses. first check that the user is ready to submit. if the user isn't ready then move back to the previous 
                                         // input group in the backstack, if there is one.
                                         if (inputGroupNum >= inputGroups.Count() - 1 && // this is the final input group
-                                        inputGroupNumBackStack.Count > 0 && // there is an input group to go back to (the current one was not displayed)
-                                        !string.IsNullOrWhiteSpace(submitConfirmation) && // we have a submit confirmation
-                                        !(await Application.Current.MainPage.DisplayAlert("Confirm", submitConfirmation, "Yes", "No"))) // user is not ready to submit
+                                            inputGroupNumBackStack.Count > 0 && // there is an input group to go back to (the current one was not displayed)
+                                            !string.IsNullOrWhiteSpace(submitConfirmation) && // we have a submit confirmation
+                                            !(await Application.Current.MainPage.DisplayAlert("Confirm", submitConfirmation, "Yes", "No"))) // user is not ready to submit
                                         {
                                             inputGroupNum = inputGroupNumBackStack.Pop() - 1;
                                         }
@@ -1341,45 +1382,56 @@ namespace SensusService
                     responseWait.WaitOne();
                 }
 
-                #region geotag input groups if the user didn't cancel and we've got input groups with inputs that are complete and lacking locations
-                if (inputGroups != null && inputGroups.Any(inputGroup => inputGroup.Geotag && inputGroup.Inputs.Any(input => input.Complete && (input.Latitude == null || input.Longitude == null))))
+                // process the inputs if the user didn't cancel
+                if (inputGroups != null)
                 {
-                    _logger.Log("Geotagging input groups.", LoggingLevel.Normal, GetType());
+                    // set the submission timestamp. do this before GPS tagging since the latter could take a while and we want the timestamp to 
+                    // reflect the time that the user hit submit.
+                    DateTimeOffset submissionTimestamp = DateTimeOffset.UtcNow;
+                    foreach (InputGroup inputGroup in inputGroups)
+                        foreach (Input input in inputGroup.Inputs)
+                            input.SubmissionTimestamp = submissionTimestamp;
 
-                    try
+                    #region geotag input groups if we've got input groups with inputs that are complete and lacking locations
+                    if (inputGroups.Any(inputGroup => inputGroup.Geotag && inputGroup.Inputs.Any(input => input.Complete && (input.Latitude == null || input.Longitude == null))))
                     {
-                        Position currentPosition = GpsReceiver.Get().GetReading(cancellationToken.GetValueOrDefault());
+                        _logger.Log("Geotagging input groups.", LoggingLevel.Normal, GetType());
 
-                        if (currentPosition != null)
-                            foreach (InputGroup inputGroup in inputGroups)
-                                if (inputGroup.Geotag)
-                                    foreach (Input input in inputGroup.Inputs)
-                                        if (input.Complete)
-                                        {
-                                            bool locationUpdated = false;
+                        try
+                        {
+                            Position currentPosition = GpsReceiver.Get().GetReading(cancellationToken.GetValueOrDefault());
 
-                                            if (input.Latitude == null)
+                            if (currentPosition != null)
+                                foreach (InputGroup inputGroup in inputGroups)
+                                    if (inputGroup.Geotag)
+                                        foreach (Input input in inputGroup.Inputs)
+                                            if (input.Complete)
                                             {
-                                                input.Latitude = currentPosition.Latitude;
-                                                locationUpdated = true;
-                                            }
+                                                bool locationUpdated = false;
 
-                                            if (input.Longitude == null)
-                                            {
-                                                input.Longitude = currentPosition.Longitude;
-                                                locationUpdated = true;
-                                            }
+                                                if (input.Latitude == null)
+                                                {
+                                                    input.Latitude = currentPosition.Latitude;
+                                                    locationUpdated = true;
+                                                }
 
-                                            if (locationUpdated)
-                                                input.LocationUpdateTimestamp = currentPosition.Timestamp;
-                                        }
+                                                if (input.Longitude == null)
+                                                {
+                                                    input.Longitude = currentPosition.Longitude;
+                                                    locationUpdated = true;
+                                                }
+
+                                                if (locationUpdated)
+                                                    input.LocationUpdateTimestamp = currentPosition.Timestamp;
+                                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.Log("Error geotagging input groups:  " + ex.Message, LoggingLevel.Normal, GetType());
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        _logger.Log("Error geotagging input groups:  " + ex.Message, LoggingLevel.Normal, GetType());
-                    }
+                    #endregion
                 }
-                #endregion
 
                 callback(inputGroups);
 
@@ -1388,42 +1440,42 @@ namespace SensusService
 
         public void GetPositionsFromMapAsync(Xamarin.Forms.Maps.Position address, string newPinName, Action<List<Xamarin.Forms.Maps.Position>> callback)
         {
-            Device.BeginInvokeOnMainThread(async () =>
+            RunOnMainThread(async () =>
+            {
+                if (await ObtainPermissionAsync(Permission.Location) != PermissionStatus.Granted)
+                    FlashNotificationAsync("Geolocation is not permitted on this device. Cannot display map.");
+                else
                 {
-                    if (await ObtainPermissionAsync(Permission.Location) != PermissionStatus.Granted)
-                        FlashNotificationAsync("Geolocation is not permitted on this device. Cannot display map.");
-                    else
+                    MapPage mapPage = new MapPage(address, newPinName);
+
+                    mapPage.Disappearing += (o, e) =>
                     {
-                        MapPage mapPage = new MapPage(address, newPinName);
+                        callback(mapPage.Pins.Select(pin => pin.Position).ToList());
+                    };
 
-                        mapPage.Disappearing += (o, e) =>
-                        {
-                            callback(mapPage.Pins.Select(pin => pin.Position).ToList());
-                        };
-
-                        await Application.Current.MainPage.Navigation.PushModalAsync(mapPage);
-                    }
-                });
+                    await Application.Current.MainPage.Navigation.PushModalAsync(mapPage);
+                }
+            });
         }
 
         public void GetPositionsFromMapAsync(string address, string newPinName, Action<List<Xamarin.Forms.Maps.Position>> callback)
         {
-            Device.BeginInvokeOnMainThread(async () =>
+            RunOnMainThread(async () =>
+            {
+                if (await ObtainPermissionAsync(Permission.Location) != PermissionStatus.Granted)
+                    FlashNotificationAsync("Geolocation is not permitted on this device. Cannot display map.");
+                else
                 {
-                    if (await ObtainPermissionAsync(Permission.Location) != PermissionStatus.Granted)
-                        FlashNotificationAsync("Geolocation is not permitted on this device. Cannot display map.");
-                    else
+                    MapPage mapPage = new MapPage(address, newPinName);
+
+                    mapPage.Disappearing += (o, e) =>
                     {
-                        MapPage mapPage = new MapPage(address, newPinName);
+                        callback(mapPage.Pins.Select(pin => pin.Position).ToList());
+                    };
 
-                        mapPage.Disappearing += (o, e) =>
-                        {
-                            callback(mapPage.Pins.Select(pin => pin.Position).ToList());
-                        };
-
-                        await Application.Current.MainPage.Navigation.PushModalAsync(mapPage);
-                    }
-                });
+                    await Application.Current.MainPage.Navigation.PushModalAsync(mapPage);
+                }
+            });
         }
 
         public void UnregisterProtocol(Protocol protocol)
@@ -1496,61 +1548,61 @@ namespace SensusService
         public Task<PermissionStatus> ObtainPermissionAsync(Permission permission)
         {
             return Task.Run(async () =>
+            {
+                string rationale = null;
+                if (permission == Permission.Camera)
+                    rationale = "Sensus uses the camera to scan participation barcodes. Sensus will not record images or video.";
+                else if (permission == Permission.Location)
+                    rationale = "Sensus uses GPS to collect location information for studies you have enrolled in.";
+                else if (permission == Permission.Microphone)
+                    rationale = "Sensus uses the microphone to collect sound level information for studies you have enrolled in. Sensus will not record audio.";
+                else if (permission == Permission.Phone)
+                    rationale = "Sensus monitors telephone call metadata for studies you have enrolled in. Sensus will not record audio from calls.";
+                else if (permission == Permission.Sensors)
+                    rationale = "Sensus uses movement sensors to collect various types of information for studies you have enrolled in.";
+                else if (permission == Permission.Storage)
+                    rationale = "Sensus must be able to write to your device's storage for proper operation. Please grant this permission.";
+
+                if (await CrossPermissions.Current.CheckPermissionStatusAsync(permission) == PermissionStatus.Granted)
+                    return PermissionStatus.Granted;
+                else
                 {
-                    string rationale = null;
-                    if (permission == Permission.Camera)
-                        rationale = "Sensus uses the camera to scan participation barcodes. Sensus will not record images or video.";
-                    else if (permission == Permission.Location)
-                        rationale = "Sensus uses GPS to collect location information for studies you have enrolled in.";
-                    else if (permission == Permission.Microphone)
-                        rationale = "Sensus uses the microphone to collect sound level information for studies you have enrolled in. Sensus will not record audio.";
-                    else if (permission == Permission.Phone)
-                        rationale = "Sensus monitors telephone call metadata for studies you have enrolled in. Sensus will not record audio from calls.";
-                    else if (permission == Permission.Sensors)
-                        rationale = "Sensus uses movement sensors to collect various types of information for studies you have enrolled in.";
-                    else if (permission == Permission.Storage)
-                        rationale = "Sensus must be able to write to your device's storage for proper operation. Please grant this permission.";
+                    // the Permissions plugin requires a main activity to be present on android. ensure this below.
+                    BringToForeground();
 
-                    if (await CrossPermissions.Current.CheckPermissionStatusAsync(permission) == PermissionStatus.Granted)
-                        return PermissionStatus.Granted;
-                    else
+                    // display rationale for request to the user if needed
+                    if (rationale != null && await CrossPermissions.Current.ShouldShowRequestPermissionRationaleAsync(permission))
                     {
-                        // the Permissions plugin requires a main activity to be present on android. ensure this below.
-                        BringToForeground();
+                        ManualResetEvent rationaleDialogWait = new ManualResetEvent(false);
 
-                        // display rationale for request to the user if needed
-                        if (rationale != null && await CrossPermissions.Current.ShouldShowRequestPermissionRationaleAsync(permission))
+                        RunOnMainThread(async () =>
                         {
-                            ManualResetEvent rationaleDialogWait = new ManualResetEvent(false);
+                            await (Application.Current as App).MainPage.DisplayAlert("Permission Request", "On the next screen, Sensus will request access to your device's " + permission.ToString().ToUpper() + ". " + rationale, "OK");
+                            rationaleDialogWait.Set();
+                        });
 
-                            Device.BeginInvokeOnMainThread(async () =>
-                                {
-                                    await (Application.Current as App).MainPage.DisplayAlert("Permission Request", "On the next screen, Sensus will request access to your device's " + permission.ToString().ToUpper() + ". " + rationale, "OK");
-                                    rationaleDialogWait.Set();
-                                });
-
-                            rationaleDialogWait.WaitOne();
-                        }
-
-                        // request permission from the user
-                        PermissionStatus status = PermissionStatus.Unknown;
-                        try
-                        {
-                            Dictionary<Permission, PermissionStatus> permissionStatus = await CrossPermissions.Current.RequestPermissionsAsync(new Permission[] { permission });
-
-                            // it's happened that the returned dictionary doesn't contain an entry for the requested permission, so check for that(https://insights.xamarin.com/app/Sensus-Production/issues/903).a
-                            if (!permissionStatus.TryGetValue(permission, out status))
-                                throw new Exception("Permission status not returned for request:  " + permission);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.Log("Failed to obtain permission:  " + ex.Message, LoggingLevel.Normal, GetType());
-                            status = PermissionStatus.Unknown;
-                        }
-
-                        return status;
+                        rationaleDialogWait.WaitOne();
                     }
-                });
+
+                    // request permission from the user
+                    PermissionStatus status = PermissionStatus.Unknown;
+                    try
+                    {
+                        Dictionary<Permission, PermissionStatus> permissionStatus = await CrossPermissions.Current.RequestPermissionsAsync(new Permission[] { permission });
+
+                        // it's happened that the returned dictionary doesn't contain an entry for the requested permission, so check for that(https://insights.xamarin.com/app/Sensus-Production/issues/903).a
+                        if (!permissionStatus.TryGetValue(permission, out status))
+                            throw new Exception("Permission status not returned for request:  " + permission);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.Log("Failed to obtain permission:  " + ex.Message, LoggingLevel.Normal, GetType());
+                        status = PermissionStatus.Unknown;
+                    }
+
+                    return status;
+                }
+            });
         }
 
         /// <summary>
@@ -1574,11 +1626,11 @@ namespace SensusService
             ManualResetEvent wait = new ManualResetEvent(false);
 
             new Thread(async () =>
-                {
-                    status = await ObtainPermissionAsync(permission);
-                    wait.Set();
+            {
+                status = await ObtainPermissionAsync(permission);
+                wait.Set();
 
-                }).Start();
+            }).Start();
 
             wait.WaitOne();
 
