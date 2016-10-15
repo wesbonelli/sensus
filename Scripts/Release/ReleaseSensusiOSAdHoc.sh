@@ -11,16 +11,16 @@ if [ $# -ne 5 ]; then
     echo "\t[diawi token]:  Authorization token for Diawi uploads."
     echo "\t[email]:  Callback email for Diawi upload."
     echo ""
-    echo "For example:  ./ReleaseSensusiOSAdHoc.sh 0.8.0-prerelease /path/to/sensus.keystore keystore_password true 234-23-4-23f-sdf-4 23423423-42342-34-24 beta"
+    echo "For example:  ./ReleaseSensusiOSAdHoc.sh 0.8.0-prerelease asdf2349f809 09d8f09df8df 238f987 asdf@asdf.com"
     echo
     exit 1
 fi
 
 # set encryption key -- can be generated with `uuidgen`                                                                                                                                                                                                                             
-sed -i '' "s/private const string ENCRYPTION_KEY = \"\"/private const string ENCRYPTION_KEY = \"$2\"/g" ../../SensusService/SensusServiceHelper.cs
+sed -i '' "s/public const string ENCRYPTION_KEY = \"\"/public const string ENCRYPTION_KEY = \"$2\"/g" ../../Sensus.Shared/SensusServiceHelper.cs
 
 # set xamarin insights key to production value                                                                                                                                                                                                                                      
-sed -i '' "s/protected const string XAMARIN_INSIGHTS_APP_KEY = \"\"/protected const string XAMARIN_INSIGHTS_APP_KEY = \"$3\"/g" ../../SensusService/SensusServiceHelper.cs
+sed -i '' "s/public const string XAMARIN_INSIGHTS_APP_KEY = \"\"/public const string XAMARIN_INSIGHTS_APP_KEY = \"$3\"/g" ../../Sensus.Shared/SensusServiceHelper.cs
 
 # update Sensus version in plist file
 awk "/<key>CFBundleVersion<\/key>/ {f=1; print; next} f {\$1=\"\t<string>$1</string>\"; f=0} 1" ../../Sensus.iOS/Info.plist > tmp && mv tmp ../../Sensus.iOS/Info.plist
@@ -51,6 +51,15 @@ curl -v https://upload.diawi.com -F "file=@$ipaPath" -F token="$4" -F callback_e
 echo
 if [ $? -ne 0 ]; then
     echo "Error uploading iOS ad-hoc release to Diawi."
+    exit $?;
+fi
+
+# create/upload iOS dSYM file if upload was successful
+echo "Zipping and uploading dSYM file to Xamarin Insights."
+zip -r ../../Sensus.iOS/bin/iPhone/Ad-Hoc/SensusiOS.dSYM.zip ../../Sensus.iOS/bin/iPhone/Ad-Hoc/SensusiOS.app.dSYM
+curl -F "dsym=@../../Sensus.iOS/bin/iPhone/Ad-Hoc/SensusiOS.dSYM.zip;type=application/zip" "https://xaapi.xamarin.com/api/dsym?apikey=$3"
+if [ $? -ne 0 ]; then
+    echo "Error uploading dSYM file to Xamarin Insights."
     exit $?;
 fi
 

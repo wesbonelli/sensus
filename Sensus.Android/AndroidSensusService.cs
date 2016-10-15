@@ -15,12 +15,17 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using SensusService;
 using System;
-using System.Collections.Generic;
-using SensusUI;
-using Xamarin.Forms;
 using System.Linq;
+using System.Collections.Generic;
+using Android.Provider;
+using Xamarin.Forms;
+using Sensus.Shared;
+using Sensus.Shared.UI;
+using Sensus.Shared.Context;
+using Sensus.Shared.Exceptions;
+using Sensus.Shared.Android.Context;
+using Sensus.Shared.Android.Exceptions;
 
 namespace Sensus.Android
 {
@@ -33,29 +38,15 @@ namespace Sensus.Android
     [Service(Exported = false)]
     public class AndroidSensusService : Service
     {
-        private List<AndroidSensusServiceBinder> _bindings;
-        private Handler _mainThreadHandler;
-
-        public Handler MainThreadHandler
-        {
-            get
-            {
-                return _mainThreadHandler;
-            }
-        }
+        private readonly List<AndroidSensusServiceBinder> _bindings = new List<AndroidSensusServiceBinder>();
 
         public override void OnCreate()
         {
-            base.OnCreate();
+            base.OnCreate();            
 
-            _bindings = new List<AndroidSensusServiceBinder>();
+            InsightsInitialization.Initialize(new AndroidInsightsInitializer(Settings.Secure.GetString(ContentResolver, Settings.Secure.AndroidId)), SensusServiceHelper.XAMARIN_INSIGHTS_APP_KEY);
 
-            // sensus is a service-oriented app; however, we often need to run actions on the main thread. using
-            // xamarin forms device.begininvoke appears to invoke off the activity, which will not work. by instantiating
-            // a handler here, we will capture the main thread within the service, and we'll be able to invoke on
-            // this handler.
-            _mainThreadHandler = new Handler();
-
+            SensusContext.Current = new AndroidSensusContext(SensusServiceHelper.ENCRYPTION_KEY);
             SensusServiceHelper.Initialize(() => new AndroidSensusServiceHelper());
 
             AndroidSensusServiceHelper serviceHelper = SensusServiceHelper.Get() as AndroidSensusServiceHelper;
@@ -147,7 +138,7 @@ namespace Sensus.Android
                             serviceHelper.BringToForeground();
 
                             // display the pending scripts page if it is not already on the top of the navigation stack
-                            serviceHelper.RunOnMainThread(async () =>
+                            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(async () =>
                             {
                                 IReadOnlyList<Page> navigationStack = Xamarin.Forms.Application.Current.MainPage.Navigation.NavigationStack;
                                 Page topPage = navigationStack.Count == 0 ? null : navigationStack.Last();

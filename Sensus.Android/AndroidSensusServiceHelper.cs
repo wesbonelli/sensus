@@ -26,21 +26,23 @@ using Android.Speech;
 using Android.Support.V4.Content;
 using Android.Widget;
 using Newtonsoft.Json;
-using SensusService;
+using Sensus.Shared;
 using Xamarin;
-using SensusService.Probes.Location;
-using SensusService.Probes;
-using SensusService.Probes.Movement;
+using Sensus.Shared.Probes.Location;
+using Sensus.Shared.Probes;
+using Sensus.Shared.Probes.Movement;
 using System.Linq;
 using ZXing.Mobile;
 using Android.Graphics;
 using Android.Media;
 using Android.Bluetooth;
+using Android.Hardware;
 using Sensus.Android.Probes.Context;
+using Sensus.Shared.Android;
 
 namespace Sensus.Android
 {
-    public class AndroidSensusServiceHelper : SensusServiceHelper
+    public class AndroidSensusServiceHelper : SensusServiceHelper, IAndroidSensusServiceHelper
     {
         private AndroidSensusService _service;
         private ConnectivityManager _connectivityManager;
@@ -54,12 +56,6 @@ namespace Sensus.Android
         private List<Action<AndroidMainActivity>> _actionsToRunUsingMainActivity;
         private Dictionary<string, PendingIntent> _callbackIdPendingIntent;
         private bool _userDeniedBluetoothEnable;
-
-        [JsonIgnore]
-        public AndroidSensusService Service
-        {
-            get { return _service; }
-        }
 
         public override string DeviceId
         {
@@ -189,10 +185,6 @@ namespace Sensus.Android
                 _wakeLock = (_service.GetSystemService(Context.PowerService) as PowerManager).NewWakeLock(WakeLockFlags.Partial, "SENSUS");
                 _wakeLockAcquisitionCount = 0;
                 _deviceId = Settings.Secure.GetString(_service.ContentResolver, Settings.Secure.AndroidId);
-
-                // must initialize after _deviceId is set
-                if (Insights.IsInitialized)
-                    Insights.Identify(_deviceId, "Device ID", _deviceId);
             }
         }
 
@@ -287,12 +279,6 @@ namespace Sensus.Android
         #endregion
 
         #region miscellaneous platform-specific functions
-
-        protected override void InitializeXamarinInsights()
-        {
-            Insights.Initialize(XAMARIN_INSIGHTS_APP_KEY, Application.Context);  // can't reference _service here since this method is called from the base class constructor, before the service is set.
-        }
-
         public override void PromptForAndReadTextFileAsync(string promptTitle, Action<string> callback)
         {
             new Thread(() =>
@@ -715,35 +701,6 @@ namespace Sensus.Android
             else
                 return isEnabled;
         }
-
-        /// <summary>
-        /// Runs an action on the main thread. Should not be called directly. See SensusServiceHelper.RunOnMainThread.
-        /// </summary>
-        /// <param name="action">Action.</param>
-        protected override void RunOnMainThreadNative(Action action)
-        {
-            // we'll deadlock below if we're currently on the main thread.
-            AssertNotOnMainThread("Run on main thread.");
-
-            // sensus does not always have an activity, so use the handler on the service to run 
-            // things on the UI thread.
-            ManualResetEvent runWait = new ManualResetEvent(false);
-
-            _service.MainThreadHandler.Post(() =>
-            {
-                try
-                {
-                    action();
-                }
-                finally
-                {
-                    runWait.Set();
-                }
-            });
-
-            runWait.WaitOne();
-        }
-
         #endregion
 
         #region callback scheduling
@@ -853,14 +810,24 @@ namespace Sensus.Android
             ManualResetEvent foregroundWait = new ManualResetEvent(false);
 
             RunActionUsingMainActivityAsync(mainActivity =>
-                {
-                    foregroundWait.Set();
+            {
+                foregroundWait.Set();
 
-                }, true, false);
+            }, true, false);
 
             foregroundWait.WaitOne();
         }
 
         #endregion
+
+        public void StopAndroidSensusService()
+        {
+            _service.Stop();
+        }
+
+        public SensorManager GetSensorManager()
+        {
+            return _service.GetSystemService(Context.SensorService) as SensorManager;
+        }
     }
 }

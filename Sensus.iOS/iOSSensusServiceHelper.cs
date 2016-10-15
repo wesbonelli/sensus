@@ -12,26 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-using System;
-using SensusService;
-using Xamarin;
-using SensusService.Probes.Location;
-using SensusService.Probes;
-using Xamarin.Forms.Platform.iOS;
 using UIKit;
 using Foundation;
-using Xamarin.Forms;
-using System.Collections.Generic;
-using AVFoundation;
-using System.Threading;
-using Plugin.Toasts;
-using SensusService.Probes.Movement;
-using MessageUI;
+using System;
 using System.IO;
-using Newtonsoft.Json;
-using CoreBluetooth;
-using SensusService.Exceptions;
 using System.Linq;
+using System.Threading;
+using System.Collections.Generic;
+using Sensus.Shared;
+using Sensus.Shared.Probes;
+using Sensus.Shared.Context;
+using Sensus.Shared.Exceptions;
+using Sensus.Shared.Probes.Movement;
+using Sensus.Shared.Probes.Location;
+using Xamarin;
+using Xamarin.Forms;
+using Xamarin.Forms.Platform.iOS;
+using MessageUI;
+using AVFoundation;
+using Plugin.Toasts;
+using CoreBluetooth;
+using Newtonsoft.Json;
 using CoreFoundation;
 
 namespace Sensus.iOS
@@ -113,14 +114,6 @@ namespace Sensus.iOS
             UIDevice.CurrentDevice.BatteryMonitoringEnabled = true;
         }
 
-        protected override void InitializeXamarinInsights()
-        {
-            Insights.Initialize(XAMARIN_INSIGHTS_APP_KEY);
-
-            if (Insights.IsInitialized)
-                Insights.Identify(DeviceId, "Device ID", DeviceId);
-        }
-
         #region callback scheduling
 
         protected override void ScheduleRepeatingCallback(string callbackId, int initialDelayMS, int repeatDelayMS, bool repeatLag)
@@ -139,7 +132,7 @@ namespace Sensus.iOS
             string userNotificationMessage = GetCallbackUserNotificationMessage(callbackId);
             string notificationId = GetCallbackNotificationId(callbackId);
 
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 UILocalNotification notification = new UILocalNotification
                 {
@@ -163,7 +156,7 @@ namespace Sensus.iOS
 
                 UIApplication.SharedApplication.ScheduleLocalNotification(notification);
 
-                Logger.Log("Callback " + callbackId + " scheduled for " + notification.FireDate + " (" + (repeating ? "repeating" : "one-time") + "). " + _callbackIdNotification.Count + " total callbacks in iOS service helper.", LoggingLevel.Debug, GetType());
+                Logger.Log("Callback " + callbackId + " scheduled for " + notification.FireDate + " (" + (repeating ? "repeating" : "one-time") + "). " + _callbackIdNotification.Count + " total callbacks in iOS service helper.", LoggingLevel.Normal, GetType());
             });
         }
 
@@ -206,7 +199,7 @@ namespace Sensus.iOS
             // schedule new callback at the specified time.
             repeatCallbackTime =>
             {
-                RunOnMainThread(() =>
+                SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
                 {
                     callbackNotification.FireDate = repeatCallbackTime.ToUniversalTime().ToNSDate();
 
@@ -224,7 +217,7 @@ namespace Sensus.iOS
             // notification has been serviced, so end background task
             () =>
             {
-                RunOnMainThread(() =>
+                SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
                 {
                     UIApplication.SharedApplication.EndBackgroundTask(callbackTaskId);
                 });
@@ -247,7 +240,7 @@ namespace Sensus.iOS
 
         public void UpdateCallbackNotificationActivationIdsAsync()
         {
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 // this method will be called in one of three conditions:  (1) after sensus has been started and is running, (2)
                 // after sensus has been reactivated and was already running, and (3) after a start attempt was made but failed.
@@ -317,7 +310,7 @@ namespace Sensus.iOS
 
         public override void ShareFileAsync(string path, string subject, string mimeType)
         {
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 if (MFMailComposeViewController.CanSendMail)
                 {
@@ -334,7 +327,7 @@ namespace Sensus.iOS
 
         public override void SendEmailAsync(string toAddress, string subject, string message)
         {
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 if (MFMailComposeViewController.CanSendMail)
                 {
@@ -376,7 +369,7 @@ namespace Sensus.iOS
                 string input = null;
                 ManualResetEvent dialogDismissWait = new ManualResetEvent(false);
 
-                RunOnMainThread(() =>
+                SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
                 {
                     ManualResetEvent dialogShowWait = new ManualResetEvent(false);
 
@@ -426,7 +419,7 @@ namespace Sensus.iOS
 
         public override void IssueNotificationAsync(string message, string id, bool playSound, bool vibrate)
         {
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 // cancel any existing notifications with the given id
                 lock (_nonCallbackNotifications)
@@ -478,7 +471,7 @@ namespace Sensus.iOS
         private void CancelLocalNotification(UILocalNotification notification, string notificationIdKey)
         {
             // set up action to cancel notification
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 try
                 {
@@ -494,6 +487,7 @@ namespace Sensus.iOS
                     foreach (UILocalNotification scheduledNotification in UIApplication.SharedApplication.ScheduledLocalNotifications)
                     {
                         string scheduledId = scheduledNotification.UserInfo.ValueForKey(new NSString(notificationIdKey))?.ToString();
+
                         if (scheduledId == idToCancel)
                         {
                             UIApplication.SharedApplication.CancelLocalNotification(scheduledNotification);
@@ -516,12 +510,11 @@ namespace Sensus.iOS
 
         protected override void ProtectedFlashNotificationAsync(string message, bool flashLaterIfNotVisible, TimeSpan duration, Action callback)
         {
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 DependencyService.Get<IToastNotificator>().Notify(ToastNotificationType.Info, "", message + Environment.NewLine, duration);
 
-                if (callback != null)
-                    callback();
+                callback?.Invoke();
             });
         }
 
@@ -558,7 +551,7 @@ namespace Sensus.iOS
             bool enabled = false;
             ManualResetEvent enableWait = new ManualResetEvent(false);
 
-            RunOnMainThread(() =>
+            SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(() =>
             {
                 try
                 {
@@ -590,25 +583,6 @@ namespace Sensus.iOS
                 Logger.Log("Timed out while waiting for user to enable Bluetooth.", LoggingLevel.Normal, GetType());
 
             return enabled;
-        }
-
-        protected override void RunOnMainThreadNative(Action action)
-        {
-            ManualResetEvent runWait = new ManualResetEvent(false);
-
-            Device.BeginInvokeOnMainThread(() =>
-            {
-                try
-                {
-                    action();
-                }
-                finally
-                {
-                    runWait.Set();
-                }
-            });
-
-            runWait.WaitOne();
         }
 
         #region methods not implemented in ios

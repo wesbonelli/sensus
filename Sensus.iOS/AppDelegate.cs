@@ -13,22 +13,26 @@
 // limitations under the License.
 
 using System;
-using Foundation;
-using UIKit;
-using Xamarin.Forms.Platform.iOS;
-using Xamarin.Forms;
-using SensusUI;
-using SensusService;
 using System.IO;
-using Facebook.CoreKit;
+using System.Linq;
+using System.Collections.Generic;
 using Xamarin;
+using Xamarin.Forms;
+using Xamarin.Forms.Platform.iOS;
 using Xam.Plugin.MapExtend.iOSUnified;
+using Sensus.Shared;
+using Sensus.Shared.UI;
+using Sensus.Shared.Probes;
+using Sensus.Shared.Context;
+using Sensus.Shared.Exceptions;
+using Sensus.Shared.iOS.Context;
+using UIKit;
+using Foundation;
 using CoreLocation;
 using Plugin.Toasts;
-using SensusService.Probes;
+using Facebook.CoreKit;
+using Sensus.Shared.iOS.Exceptions;
 using Syncfusion.SfChart.XForms.iOS.Renderers;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Sensus.iOS
 {
@@ -36,10 +40,13 @@ namespace Sensus.iOS
     // User Interface of the application, as well as listening (and optionally responding) to
     // application events from iOS.
     [Register("AppDelegate")]
-    public partial class AppDelegate : FormsApplicationDelegate
+    public class AppDelegate : FormsApplicationDelegate
     {
         public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
+            InsightsInitialization.Initialize(new iOSInsightsInitializer(UIDevice.CurrentDevice.IdentifierForVendor.AsString()), SensusServiceHelper.XAMARIN_INSIGHTS_APP_KEY);
+
+            SensusContext.Current = new iOSSensusContext(SensusServiceHelper.ENCRYPTION_KEY);
             SensusServiceHelper.Initialize(() => new iOSSensusServiceHelper());
 
             // facebook settings
@@ -181,7 +188,7 @@ namespace Sensus.iOS
                     if (notificationId != null && notificationId.ToString() == SensusServiceHelper.PENDING_SURVEY_NOTIFICATION_ID)
                     {
                         // display the pending scripts page if it is not already on the top of the navigation stack
-                        serviceHelper.RunOnMainThread(async () =>
+                        SensusContext.Current.MainThreadSynchronizer.ExecuteThreadSafe(async () =>
                         {
                             IReadOnlyList<Page> navigationStack = Xamarin.Forms.Application.Current.MainPage.Navigation.NavigationStack;
                             Page topPage = navigationStack.Count == 0 ? null : navigationStack.Last();
