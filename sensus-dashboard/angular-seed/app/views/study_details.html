@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+		<div class="body_section inner">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Details</font>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<font font class="menu_text">Overview</font>
+							</li>
+						</ul>
+						<ul id="displayDetailsMenu" class="right_menu fit menu_tab">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="editStudyDetails()">Edit</button>
+							</li>
+						</ul>
+						<ul id="editDetailsMenu" class="right_menu fit menu_tab">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="discardStudyDetailsChanges()">Discard</button>
+							</li>
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="saveStudyDetailsChanges()">Save</button>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="body_section inner">
+					<div class="horiz_auto_block">
+						<div id="displayDetailsSection" class="block_text_area tab">
+							<a class="block_text">Title:</a>
+							<a class="block_text">{{study.title}}</a>
+							<br>
+							<a class="block_text">Start date:</a>
+							<a class="block_text" ng-bind="study.startDate | date:'MM/dd/yyyy'"></a>
+							<br>
+							<a class="block_text">End date:</a>
+							<a class="block_text" ng-bind="study.endDate | date: 'MM/dd/yyyy'"></a>
+							<br>
+							<a class="block_text">{{study.description}}</a>
+						</div>
+						<div id="editDetailsSection" class="block_text_area tab">
+							<table style="width:100%">
+								<tr>
+									<td>
+										<a class="block_text">Title:</a>
+									</td>
+									<td>
+										<input class="body_centered_element text_input" name="studyTitle" type="text" placeholder="{{study.title}}" size="50" ng-model="detailsFormData.studyTitle">
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<a class="block_text">Start date:</a>
+									</td>
+									<td>
+										<input class="body_centered_element text_input" name="studyStartDate" placeholder="{{study.startDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.studyStartDate" jqdatepicker>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<a class="block_text">End date:</a>
+									</td>
+									<td>
+										<input class="body_centered_element text_input" name="studyEndDate" placeholder="{{study.endDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.studyEndDate" jqdatepicker>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<a class="block_text">Description:</a>
+									</td>
+									<td>
+										<textarea class="body_centered_element" name="studyDescription" placeholder="{{study.description}}" cols="48" rows="8" ng-model="detailsFormData.studyDescription"></textarea>
+									</td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<a class="menu_text">Researchers</a>
+							</li>
+						</ul>
+						<ul class="right_menu fit">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="showHideAddResearcherTab()">{{addResearcherButtonText}}</button>
+							</li>
+						</ul>
+						
+					</div>
+					<br></br>
+				</div>
+				<div class="body_section inner">
+					<div class="horiz_white_menu" ng-repeat="researcher in study.researchers | orderBy:'emailAddress'">
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<!--<li class="horiz_menu_item">
+									<svg class="small_rectangle" ng-style="{'background-color':participant.healthStatus"></svg>
+								</li>-->
+								<li class="horiz_menu_item">
+									<font class="block_body_text">{{researcher.firstName}} {{researcher.lastName}}</font>
+								</li>
+							</ul>
+							<ul class="right_menu offset">
+								<li class="horiz_menu_item">
+									<button class="body_button" type="button" data-ng-click="removeResearcher(researcher)">Remove</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div id="addResearcherTab" class="horiz_white_menu researcher_tab">
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item">
+									<input class="text_input" name="researcherLastName" type="text" placeholder="Last name" size="50" ng-model="researcherFormData.researcherLastName">
+								</li>
+							</ul>
+							<ul class="fit">
+								<li class="horiz_menu_item">
+									<input class="text_input" name="researcherEmailAddress" type="text" placeholder="Email address" size="50" ng-model="researcherFormData.researcherEmailAddress">
+								</li>
+							</ul>
+							<ul class="right_menu offset">
+								<li class="horiz_menu_item">
+									<button class="body_button" type="button" data-ng-click="submitAddResearcher()">{{submitAddResearcherButtonText}}</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div id="addResearcherTab" class="horiz_white_menu researcher_tab" ng-repeat="researcher in researcherSearchResults | orderBy:'lastName'">
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item">
+									<button class="body_button" type="button" data-ng-click="addResearcher(researcher)">{{researcher.firstName}} {{researcher.lastName}} ({{researcher.emailAddress}})</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<a class="menu_text">Goals</a>
+							</li>
+						</ul>
+						<ul class="right_menu fit">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="addGoal()">Add</button>
+							</li>
+						</ul>
+					</div>
+					<br></br>
+				</div>
+				<div class="body_section inner">
+					<div class="horiz_menu" ng-repeat="goal in goals.list">
+					{{goals.message}}
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item"><font class="block_body_text">{{goal.text}}</font></li>
+							</ul>
+							<ul class="right_menu offset">
+								<li class="horiz_menu_item">
+									<button class="body_list_button" type="button" data-ng-click="editGoal()">Edit</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<a class="menu_text">Hypotheses</a>
+							</li>
+						</ul>
+						<ul class="right_menu fit">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="addHypothesis()">Add</button>
+							</li>
+						</ul>
+					</div>
+					<br></br>
+				</div>
+				<div class="body_section inner">
+					<div class="horiz_menu" ng-repeat="hypothesis in hypotheses.list">
+					{{hypotheses.message}}
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item"><font class="block_body_text">{{hypothesis.text}}</font></li>
+							</ul>
+							<ul class="right_menu offset">
+								<li class="horiz_menu_item">
+									<button class="body_list_button" type="button" data-ng-click="editHypothesis()">Edit</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

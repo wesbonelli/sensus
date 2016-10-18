@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+		 <div class="body_section" style="float:right;width:39.5%">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Log</font>
+						</li>
+					</ul>
+					<ul class="right_menu fit">
+						<li class="horiz_menu_item"><button class="body_button" type="button" data-ng-click="refreshLogEntries()">Refresh</button>
+						</li>
+						<li class="horiz_menu_item"><button class="body_button" type="button" data-ng-click="navToLogEntries(study, null)">View all</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner vertical_scroll_container_white">
+				<logentrylist handle="logEntries"></logentrylist>
+			</div>
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+
+				</div>
+			</div>
+		</div>
+		<div class="body_section" style="width:60%">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<font class="menu_text">{{study.title}}</font>
+							</li>
+						</ul>
+						<ul class="fit">
+							<li class="horiz_menu_item" style="padding-right:10px">
+								<button class="dropdown_button" type="button" data-ng-click="toggleStudyFilterMenu()">{{studyFilterMenuText}}</button>
+								<i class="el el-chevron-down"></i>
+								<div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="studyFilterMenu">
+									<a href="" data-ng-click="selectStudyDetails()">Details</a>
+									<a href="" data-ng-click="selectStudyDataLayer()">Data Layer</a>
+									<a href="" data-ng-click="selectStudyParticipants()">Participants</a>
+								</div>
+							</li>
+						</ul>
+						<ul class="right_menu fit">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="navToStudyData()">View data</button>
+							</li>
+						</ul>
+					</div>
+				</div>
+				
+				<div class="body_section inner" id="studyDetails">
+					<div class="horiz_menu">
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item">
+									<a class="menu_text">Details</a>
+								</li>
+							</ul>
+							<ul class="right_menu fit">
+								<li class="horiz_menu_item">
+									<button class="body_button" type="button" data-ng-click="navToStudyDetails(study)">View</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="body_section inner">
+						<div class="horiz_auto_block">
+							<div class="block_text_area">
+								<a class="subheader_text">Overview</a>
+								<br>
+								<div class="body_section inner">
+								<a class="block_text">Starts: </a>
+								<a class="block_text" ng-bind="study.startDate | date:'MM/dd/yyyy'"></a>
+								<br>
+								<a class="block_text">Ends: </a>
+								<a class="block_text" ng-bind="study.endDate | date: 'MM/dd/yyyy'"></a>
+								<br>
+								<a class="block_text">{{study.description}}</a>
+								</div>
+								<br>
+								<a class="subheader_text">Administrators</a>
+								<br>
+								<div class="body_section inner">
+								<a class="block_text" ng-repeat="researcher in researchers | orderBy:'emailAddress'">{{researcher.firstName}} {{researcher.lastName}}<br></a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="body_section inner" id="studyDataLayer" style="display:none">
+					<div class="horiz_menu">
+						<div class="horiz_menu_actions">
+							<ul>
+								<li class="horiz_menu_item">
+									<font font class="menu_text">Data Layer</font>
+								</li>
+							</ul>
+							<ul class="right_menu">
+								<li class="header_menu_item">
+									<button class="body_button" type="button" data-ng-click="navToDataLayer()">View</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="body_section inner">
+						<div class="horiz_auto_block">
+							<div class="block_text_area">
+								<div class="body_section inner">
+									<a class="subheader_text">Storage: {{dataSource.type}}<br></a>
+									<a id="S3" class="block_text">Bucket: {{dataSource.s3Bucket}}<br></a>
+								</div>
+								<br>
+								<div class="body_section inner">
+									<a class="subheader_text">Database: {{database.type}}<br></a>
+									<a id="PostgreSQL" class="block_text">Host: {{database.pgHost}}<br></a>
+									<a id="PostgreSQL" class="block_text">Port: {{database.pgPort}}<br></a>
+									<a id="PostgreSQL" class="block_text">Name: {{database.pgName}}<br></a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="body_section inner" id="studyParticipants" style="display:none">
+					<div class="horiz_menu">
+						<div class="horiz_menu_actions">
+							<ul class="fit">
+								<li class="horiz_menu_item">
+									<a class="menu_text">Participants</a>
+								</li>
+							</ul>
+							<ul class="fit">
+								<li class="horiz_menu_item" style="padding-right:10px">
+									<button class="dropdown_button" type="button" data-ng-click="toggleParticipantFilterMenu()">{{participantFilterMenuText}}</button>
+									<div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="participantFilterMenu">
+										<a href="" data-ng-click="selectActiveParticipants()">Active</a>
+										<a href="" data-ng-click="selectInactiveParticipants()">Inactive</a>
+									</div>
+								</li>
+							</ul>
+							<ul class="right_menu fit">
+								<li class="horiz_menu_item">
+									<button class="body_button" type="button" data-ng-click="navToStudyParticipants()">View</button>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<div class="body_section inner vertical_scroll_container_white">
+						<div class="body_section inner">
+							<div class="horiz_auto_block">
+								<div class="block_text_area">
+									<div class="body_section inner">
+										<a class="block_text">Total: {{participants.total}}</a>
+										<br>
+										<a class="block_text">Active: {{participants.active.length}}</a>
+										<br>
+										<a class="block_text">Inactive: {{participants.inactive.length}}</a>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="body_section inner" id="activeParticipants">
+							<participantlist handle="participants.active"></participantlist>
+						</div>
+						<div class="body_section inner" id="inactiveParticipants" style="display:none">
+							<participantlist handle="participants.inactive"></participantlist>
+						</div>
+					</div>
+					<div class="horiz_menu">
+						<div class="horiz_menu_actions">
+
+						</div>
+					</div>
+				</div>
+			</div>	
+		</div>
+	</div>
+</body>
+</html>

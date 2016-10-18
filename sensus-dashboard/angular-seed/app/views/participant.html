@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+                <div class="body_section" style="float:right;width:39.5%">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Log</font>
+						</li>
+					</ul>
+					<ul class="right_menu fit">
+						<li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="refreshLogEntries()">Refresh</button>
+						</li>
+						<li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="navToLogEntries()">View all</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner vertical_scroll_container_white">
+                                <logentrylist handle="logEntries"></logentrylist>
+                        </div>
+                        <div class="horiz_menu">
+                                <div class="horiz_menu_actions"></div>
+                        </div>
+		</div>
+		<div class="body_section" style="width:60%">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<a class="menu_text">Participant: {{participant.identifier}}</a>
+						</li>
+					</ul>
+					<ul id="viewDetailsMenu" class="right_menu fit">
+						<li class="horiz_menu_item">
+							<button class="body_button blue_hover" type="button" data-ng-click="deleteParticipant()">Unregister</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<a class="menu_text">Details</a>
+							</li>
+						</ul>
+						<ul id="editDetailsMenu" class="right_menu fit menu_tab editable" style="display:none">
+							<li class="horiz_menu_item">
+								<button class="body_button blue_hover" type="button" data-ng-click="discardParticipantDetailsChanges()">Discard</button>
+							</li>
+							<li class="horiz_menu_item">
+								<button class="body_button blue_hover" type="button" data-ng-click="saveParticipantDetailsChanges()">Save</button>
+							</li>
+						</ul>
+						<ul id="viewDetailsMenu" class="right_menu fit menu_tab viewable" style="display:inline">
+							<li class="horiz_menu_item">
+								<button class="body_button blue_hover" type="button" data-ng-click="viewEditParticipantDetails()">Edit</button>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="body_section inner">
+					<div class="horiz_auto_block">
+						<div class="block_text_area">
+							<a class="header_text">General information</a>
+							<br>
+							<div class="body_section inner">
+								<div class="block_text" style="display:inline">Identifier: {{participant.identifier}}</div>
+
+								<br>
+								<a class="block_text">Email address: {{participantEmailAddressDisplayText}}</a>
+								<button id="showHideEmailAddressButton" class="small_body_button" type="button" data-ng-click="showHideEmailAddress()">{{showHideEmailAddressButtonText}}</button>
+								<br>
+								<a class="block_text">Device Id: {{participantDeviceIdDisplayText}}</a>
+								<button class="small_body_button" type="button" data-ng-click="showHideDeviceId()">{{showHideDeviceIdButtonText}}</button>
+							</div>
+							<br>
+							<a class="header_text">Participation period</a>
+							<br>
+							<div class="body_section inner">
+								<a class="block_text" style="display:inline">Start date:</a>
+								<a class="block_text viewable" style="display:inline" ng-bind="participant.startDate | date:'MM/dd/yyyy'"></a>
+								<input class="body_centered_element text_input editable" style="display:none" name="participantStartDate" placeholder="{{participant.startDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.participantStartDate" jqdatepicker>
+								<br>
+								<a class="block_text" style="display:inline">End date:</a>
+								<a class="block_text viewable" style="display:inline" ng-bind="participant.endDate | date: 'MM/dd/yyyy'"></a>
+								<input class="body_centered_element text_input editable" style="display:none" name="participantEndDate" placeholder="{{participant.endDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.participantEndDate" jqdatepicker>
+							</div>
+						</div>
+						<div id="editDetailsSection" class="block_text_area tab">
+							<a class="header_text">General information</a>
+							<br>
+							<div class="body_section inner">
+								<a class="block_text">Identifier:</a>
+								<input class="text_input editable" name="participantIdentifer" placeholder="{{participant.identifier}}"  ng-model="detailsFormData.participantIdentifier">
+								<br>
+								<a class="block_text">Email address: {{participantEmailAddressDisplayText}}</a>
+								<button id="showHideEmailAddressButton" class="small_body_button" type="button" data-ng-click="showHideEmailAddress()">{{showHideEmailAddressButtonText}}</button>
+
+								<br>
+								<a class="block_text">Device Id: {{participantDeviceIdDisplayText}}</a>
+								<button class="small_body_button" type="button" data-ng-click="showHideDeviceId()">{{showHideDeviceIdButtonText}}</button>
+								<br>
+								<a class="block_text">Most recent datum: </a>
+                                                                <a class="block_text" ng-bind="mostRecentTimestamp | date:'MM/dd/yy HH:mm'"></a>
+							</div>
+							<br>
+							<a class="header_text">Participation period</a>
+							<div class="body_section inner">
+								<a class="block_text">Start date:</a>
+								<input class="body_centered_element text_input editable" name="participantStartDate" placeholder="{{participant.startDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.participantStartDate" jqdatepicker>
+								<br>
+								<a class="block_text">End date:</a>
+								<input class="body_centered_element text_input editable" name="participantEndDate" placeholder="{{participant.endDate | date:'MM/dd/yyyy'}}" type="text" size="50" ng-model="detailsFormData.participantEndDate" jqdatepicker>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+						<ul class="fit">
+							<li class="horiz_menu_item">
+								<a class="menu_text">Active Data</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+				<div class="horiz_auto_block">
+					<div class="block_text_area">
+						<a class="block_text">Overall response rate (Completed / Confirmed Run): {{overallScriptResponseRate | number:2}}</a>
+						<br>
+						<a class="block_text">Overall response rate (Completed / Ideal): {{overallDesiredScriptResponseRate | number:2}}</a>
+						<br>
+						<div class="body_section inner">
+							<br>
+							<div class="body_section inner" ng-repeat="name in participantData.scriptNames">
+								<a class="subheader_text">{{name.scriptname}}</a>
+								<a class="block_text" style="float:right">Response rate (Completed / Confirmed Run): {{name.scriptCount / name.scriptRunCount > 1.0 ? 1.0 : name.scriptCount / name.scriptRunCount | number:2}}</a>
+								<br>
+								<br>
+								<div class="horiz_scroll_container_white">
+									<table class="horiz_auto_block fixed_width_double subheader_text">
+										<div class="horiz_auto_block">
+											<tr class="table_row">
+												<th>Day </th>
+												<th style="padding-left:40px" ng-repeat="day in participantDays | orderBy:index:true">{{day.index + 1}}</th>
+											</tr>
+											<tr class="table_row">
+												<td>Date </td>
+												<th style="padding-left:40px" ng-repeat="day in participantDays | orderBy:index:true">
+													<a class="block_text" ng-bind="day.date | date:'MM/dd/yy'"></a>
+												</th>
+											</tr>
+											<tr class="table_row">
+												<td>Run </td>
+												<th style="padding-left:40px" ng-repeat="day in participantDays | orderBy:index:true">
+													<a ng-repeat="run in day.scriptRuns | filter:name.scriptname | filter:query as scriptRunCount"></a>
+													<a class="block_text">{{scriptRunCount.length}}</a>
+												</th>
+											</tr>
+											<tr class="table_row">
+												<td>Completed </td>
+												<th style="padding-left:40px" ng-repeat="day in participantDays | orderBy:index:true">
+													<a ng-repeat="run in day.scriptResponses | filter:name.scriptname | filter:query as scriptResponseCount"></a>
+													<a class="block_text">{{scriptResponseCount.length}}</a>
+												</th>
+											</tr>
+											<tr class="table_row">
+												<td>Rate (%) </td>
+												<th style="padding-left:40px" ng-repeat="day in participantDays | orderBy:index:true">
+													<a ng-repeat="run in day.scriptRuns | filter:name.scriptname | filter:query as scriptRunCount"></a>
+													<a ng-repeat="run in day.scriptResponses | filter:name.scriptname | filter:query as scriptResponseCount"></a>
+													<a class="block_text">{{scriptResponseCount.length / scriptRunCount.length > 1.0 ? 1.0 : scriptResponseCount.length / scriptRunCount.length | number:2}}</a>
+												</th>
+											</tr>
+										</div>
+									</table>
+								</div>
+								<div id="{{name.scriptname}}" style="width:100%;height:250px;"></div>
+								<br>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="horiz_menu">
+					<div class="horiz_menu_actions">
+                                                <ul class="fit">
+                                                        <li class="horiz_menu_item">
+                                                                <a class="menu_text">Passive Data</a>
+                                                        </li>
+                                                </ul>
+						<ul class="offset">
+							<li class="horiz_menu_item" style="padding-right:70px">
+								<button class="body_button dropdown_button" type="button" data-ng-click="showHidePassiveFilterMenu()">Filter: {{passiveFilterText}}</button>
+								<div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="passiveFilterOptions">
+									<a href="" ng-repeat="option in passiveFilterTextOptions" data-ng-click="setPassiveFilter(option)">{{option}}</a>
+								</div>
+							</li>
+						</ul>
+                                        </div>
+				</div>
+				<div class="horiz_auto_block">
+                                        <div class="block_text_area">
+						<div id="PassivePlot" style="width:100%;height:fit-content;min-height:250px;"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div style="padding-top:30px"></div>
+	</div>
+</body>
+</html>

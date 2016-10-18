@@ -1,5 +1,6 @@
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -20,6 +21,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.Statement;
+import com.amazonaws.AmazonWebServiceClient;
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.auth.AWSCredentials;
@@ -35,274 +37,519 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.ListObjectsV2Request;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import java.io.ByteArrayOutputStream;
+import java.io.ByteArrayInputStream;
+import java.util.zip.GZIPInputStream;
+import org.apache.commons.io.IOUtils;
+
+
+
+
+
+
 
 public class DatabaseUpdater {
+
+	////////
+	// private members
+	////////
+
+	private String temporaryLocalDataFilePath;
 	
-	private static HashMap<String, Integer> _encounteredFiles;
-	
+	////////
+	// public methods
+	////////
+
 	public DatabaseUpdater() {
-		_encounteredFiles = new HashMap<String, Integer>();
+		temporaryLocalDataFilePath = null;
 	}
+
+	public String getTemporaryLocalDataFilePath() {
+		return temporaryLocalDataFilePath;
+	}
+
+	public void setTemporaryLocalDataFilePath(String path) {
+		temporaryLocalDataFilePath = path;
+	}
+
+	public static void handleException(Exception ex, boolean exit) {
+		System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
+		ex.printStackTrace();
+		if (exit)
+			System.exit(0);
+	}
+
+
+
+
+
+	////////
+	// Entry point. When executed, this program first checks a data source for new files.
+	// If new files are found, it downloads, parses, and updates a database from files one at a time.
+	// @param 	temporaryLocalDataFilePath 		the directory to download files into
+	// @param 	s3Bucket 						the S3 bucket acting as data sourcee
+	// @param 	databaseServer					the database to be updated
+	// @param 	databasePort					"
+	// @param 	databaseName					"
+	// @param 	databaseUser					"
+	// @param 	databasePassword				"
+	////////
 
 	public static void main(String[] args) {
-		DatabaseUpdater _databaseUpdater = new DatabaseUpdater();
-		BufferedReader _reader;
-		String _path = "";
-		String _server = "";
-		String _port = "";
-		String _database = "";
-		String _user = "";
-		String _password = "";
-		
-		// get user input
-		try {
-			_reader = new BufferedReader(new InputStreamReader(System.in));
-			// ask where to download files
-			System.out.print("Download to directory: ");
-			_path = _reader.readLine();
-			// get PostgreSQL info
-			System.out.print("PostgreSQL server: ");
-			_server = _reader.readLine();
-			System.out.print("PostgreSQL port: ");
-			_port = _reader.readLine();
-			System.out.print("PostgreSQL database: ");
-			_database = _reader.readLine();
-			System.out.print("PostgreSQL user: ");
-			_user = _reader.readLine();
-			System.out.print("PostgreSQL password: ");
-			_password = _reader.readLine();
-		} catch (Exception _ex) {
-			System.out.println(_ex.getClass().getName() + ": " + _ex.getMessage());
-			_ex.printStackTrace();
-			System.exit(0);
-		}
-		
-		// schedule data refresh
-		Timer _timer = new Timer();
-		_timer.scheduleAtFixedRate(new Refresh(_path, _server, _port, _database, _user, _password,  _databaseUpdater._encounteredFiles), 0, 120000);
-	}
-}
 
-class Refresh extends TimerTask  {
-	
-	private String _path;
-	private String _pgServer;
-	private String _pgPort;
-	private String _pgDatabase;
-	private String _pgUser;
-	private String _pgPassword;
-	private static HashMap<String, Integer> _encounteredFiles;
+		DatabaseUpdater databaseUpdater = new DatabaseUpdater();
+		DataSource dataSource = new DataSource();
+		Database database = new Database();
 
-	public Refresh(String path, String pgServer, String pgPort, String pgDatabase, String pgUser, String pgPassword, HashMap<String, Integer> encounteredFiles) {
-		this._path = path;
-		this._pgServer = pgServer;
-		this._pgPort = pgPort;
-		this._pgDatabase = pgDatabase;
-		this._pgUser = pgUser;
-		this._pgPassword = pgPassword;
-		this._encounteredFiles = encounteredFiles;
-	}
+		// get arguments
+		databaseUpdater.setTemporaryLocalDataFilePath(args[0]);
+		final String s3Bucket = args[1];
+		final String databaseServer = args[2];
+		final String databasePort = args[3];
+		final String databaseName = args[4];
+		final String databaseUser = args[5];
+		final String databasePassword = args[6];
 
-	public void run() {
-		try {
-			// get data from S3
-			System.out.print("Syncing from S3");
-			Process _process;
-			String _command = "aws s3 cp --recursive s3://summertesting " + _path;
-			ArrayList<File> _newFiles = new ArrayList<File>();
-			ArrayList<String> _awsOutput = new ArrayList<String>();
-			try {
-				System.out.print(".");
-				_process = Runtime.getRuntime().exec(_command);
-				System.out.print(".");
-				BufferedReader _reader = new BufferedReader(new InputStreamReader(_process.getInputStream()));
-				String _output = null;
-				while ((_output = _reader.readLine()) != null) {
-				    _awsOutput.add(_output);
-				}
-				System.out.print(".");
-				// read output to get list of expected files
-				for (String _line : _awsOutput) {
-					if (!_line.contains("download")) {
-						continue;
-					}
-					String[] _split = _line.split(" ");
-					String _path = _split[_split.length - 1];
-					// if we haven't seen this file before, add it to _newFiles and _encounteredFiles
-					if (!_encounteredFiles.keySet().contains(_path)) {
-						_newFiles.add(new File("/Users/wesbonelli/Documents/research/rshiny/" + _path));
-						_encounteredFiles.put(_path, 0);
-					}
-				}
-				System.out.print(".");
-				// TODO make sure we have the files we expect
-				
-			} catch (Exception _ex) {
-				System.err.println(_ex.getClass().getName() + ": " + _ex.getMessage());
-				_ex.printStackTrace();
-				System.exit(0);
-			}
-			
-			// parse each file and update database
-			System.out.println("");
-			System.out.println("Updating database from files...");
-			Thread.sleep(500);
-			ArrayList<String> _types = new ArrayList<String>();		// keep track of encountered types so we know which tables to check for duplicates
-			for (File _file : _newFiles) {
-				// connect to PostgreSQL
-				Connection _connection = null;
-				Statement _statement = null;
+		// data source connection
+		Thread s3CheckThread = new Thread(new Runnable() {
+    		public void run() {
+    			dataSource.setS3Bucket(s3Bucket);
+    			dataSource.updateS3RootDirectoryCount();
+    			dataSource.updateS3Keys();
+    		}
+		});
+
+		// database connection
+		Thread postgreSQLConnectThread = new Thread(new Runnable() {
+    		public void run() {
+    			database.connectToPostgreSQL(databaseServer, databasePort, databaseName, databaseUser, databasePassword);
+
+    			// wait for the S3 connection before continuing
+    			try {
+    				s3CheckThread.join();
+    			} catch (Exception ex) {
+    				handleException(ex, true);
+    			}
+
+    			System.out.println("Updating database from files...");
+
 				try {
-			         Class.forName("org.postgresql.Driver");
-			         _connection = DriverManager
-			            .getConnection("jdbc:postgresql://" + _pgServer + ":" + _pgPort + "/" + _pgDatabase,
-			            _pgUser, _pgPassword);
-			      } catch (Exception _ex) {
-			         System.err.println(_ex.getClass().getName() + ": "+ _ex.getMessage());
-			         _ex.printStackTrace();
-			         System.exit(0);
-			      }
-				_connection.setAutoCommit(false);
-				_statement = _connection.createStatement();
-				System.out.println("	" + _file.getName());
-				String _type = null;			// type of Datum
-				FileInputStream _stream = new FileInputStream(_file);
-				byte[] _bytes = new byte[(int) _file.length()];
-				_stream.read(_bytes);
-				_stream.close();
-				String _content = new String(_bytes, "UTF-8");
-				JSONArray _jsonArray = new JSONArray(_content);
+					// transfer data to the database file by file so we don't use excessive disk space
+					for (String key : dataSource.getS3Keys()) {
+
+						System.out.println(key);
+
+						// get a json array of the file's contents
+						JSONArray fileContents = dataSource.downloadS3Object(key);
+
+						// attempt to update the database with the json data
+						database.updatePostgreSQLDatabaseFromJSON(key.split("/")[0], fileContents);
+					}
+				} catch (Exception ex) {
+					handleException(ex, true);
+				}
+
+				database.disconnectFromPostgreSQL();
+    		}
+		});
+
+		// start threads
+		s3CheckThread.start();
+		postgreSQLConnectThread.start();
+	}
+}
+
+
+
+
+
+
+
+////////
+// The database to update.
+////////
+
+class Database {
+
+	////////
+	// private members
+	////////
+
+	private String server;
+	private String port;
+	private String name;
+	private String user;
+	private String password;
+	private Connection connection;
+
+	////////
+	// public methods
+	////////
+
+	public Database() {
+		server = null;
+		port = null;
+		name = null;
+		user = null;
+		password = null;
+		connection = null;
+	}
+
+	public String getServer() {
+		return this.server;
+	}
+
+	public String getPort() {
+		return port;
+	}
+
+	public String getName() {
+		return this.name;
+	}
+
+	public String getUser() {
+		return this.user;
+	}
+
+	public Connection getConnection() {
+		return this.connection;
+	}
+
+	public static void handleException(Exception ex, boolean exit) {
+		System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
+		ex.printStackTrace();
+		if (exit)
+			System.exit(0);
+	}
+
+	public boolean connectToPostgreSQL(String server, String port, String name, String user, String password) {
+		this.server = server;
+		this.port = port;
+		this.name = name;
+		this.user = user;
+		this.password = password;
+
+		try {
+	        Class.forName("org.postgresql.Driver");
+	        this.connection = DriverManager.getConnection("jdbc:postgresql://" + this.server + ":" + this.port + "/" + this.name, this.user, this.password);
+	        this.connection.setAutoCommit(false);
+	        return true;
+	    } catch (Exception ex) {
+	        handleException(ex, true);
+	        return false;
+	    }
+	}
+
+	public void disconnectFromPostgreSQL() {
+		try {
+			this.connection.close();
+		} catch (Exception ex) {
+	        handleException(ex, true);
+	    }
+	}
+
+	public void updatePostgreSQLDatabaseFromJSON(String identifier, JSONArray jsonArray) {
+		try {
+			Statement statement = this.connection.createStatement();
+			PreparedStatement prepared = null;
+
+			String type = null;
+			boolean first = true;
+			
+			// loop through each entry in the array
+			for (int i = 0; i < jsonArray.length(); i += 1) {
+				if (jsonArray.isNull(i)) {
+					continue;
+				}
+				JSONObject jsonObject = jsonArray.getJSONObject(i);
+				SortedMap<String, Object> entry = new TreeMap<String, Object>();
+
+				// attach identifier to the json data (directory one level deeper than the bucket)
+				entry.put("identifier", identifier);
 				
-				// loop through each curly-bracketed json array (single data entry)
-				PreparedStatement _prepared = null;
-				boolean _first = true;
-				for (int i = 0; i < _jsonArray.length(); i += 1) {
-					if (_jsonArray.isNull(i)) {
-						continue;
+				// loop through each value in the current entry
+				for (Object key : jsonObject.keySet()) {
+					String keyStr = ((String) key);
+					Object obj = jsonObject.get(keyStr);
+					String column = "";
+					Object value = null;
+					switch (keyStr) {
+						case "$type":
+							// set type so we can differentiate between shared cases below
+							String[] split1 = String.valueOf(obj).split(" ");
+							String[] split2 = split1[0].split("\\.");
+							String sub = split2[split2.length - 1];
+							type = sub.substring(0, sub.length() - 1).toLowerCase();
+							column = "type";
+							break;
+						// "on" cannot be the name of a PostgreSQL column
+						case "On":
+							column = "ison";
+							value = Boolean.parseBoolean(obj.toString());
+							break;
+						default:
+							column = keyStr.toLowerCase();	// PostgreSQL column names are all lowercase
+							value = obj.toString();			// add everything as a string for now
+							break;
 					}
-					JSONObject _jsonObject = _jsonArray.getJSONObject(i);
-					SortedMap<String, Object> _entry = new TreeMap<String, Object>();
-					
-					// loop through each value in the current entry
-					for (Object _key : _jsonObject.keySet()) {
-						String _keyStr = ((String) _key);
-						Object _obj = _jsonObject.get(_keyStr);
-						String _column = "";
-						Object _value = null;
-						switch (_keyStr) {
-							case "$type":
-								// set type so we can differentiate between shared cases below
-								String[] _split1 = String.valueOf(_obj).split(" ");
-								String[] _split2 = _split1[0].split("\\.");
-								String _sub = _split2[_split2.length - 1];
-								_type = _sub.substring(0, _sub.length() - 1).toLowerCase();
-								_column = "type";
-								if (!_types.contains(_type)) {
-									_types.add(_type);
-								}
-								break;
-							// "on" cannot be the name of a PostgreSQL column
-							case "On":
-								_column = "ison";
-								_value = Boolean.parseBoolean(_obj.toString());
-								break;
-							default:
-								_column = _keyStr.toLowerCase();	// PostgreSQL column names are all lowercase
-								_value = _obj.toString();			// add everything as a string for now
-								break;
-						}
-						if (!_column.equals("type") && !_column.isEmpty()) {
-							_entry.put(_column, _value);
-						}
-					}
-					
-					// if first object in file, get column names and prepare insert statement
-					String _query = null;
-					SortedMap<String, Integer> _columns = new TreeMap<String, Integer>();
-					if (_first) {
-						_query = "SELECT * FROM " + _type;
-						ResultSet _results = _statement.executeQuery(_query);
-						ResultSetMetaData _resultsMetaData = _results.getMetaData();
-						int _numColumns = _resultsMetaData.getColumnCount();
-						_columns = new TreeMap<String, Integer>();
-						for (int j = 1; j <= _numColumns; j += 1) {
-							_columns.put(_resultsMetaData.getColumnName(j), _resultsMetaData.getColumnType(j));
-						}
-						_query = "INSERT INTO " + _type + " (";
-						for (String _key : _columns.keySet()) {
-							_query += _key + ", ";
-						}
-						_query = _query.substring(0, _query.length() - 2);		// remove last comma
-						_query += ") SELECT ";
-						for (int j = 0; j < _numColumns; j += 1) {
-							_query += "?, ";
-						}
-						_query = _query.substring(0, _query.length() - 2);		// remove last comma
-						_query += ";";
-						_prepared = _connection.prepareStatement(_query);
-						_first = false;
-					}
-					
-					// assign parameter types and add batch
-					int _index = 1;
-					for (String _key : _columns.keySet()) {
-						int _valueType = _columns.get(_key);
-						if (_valueType == -5) {				// BIGINT
-							try {
-								_prepared.setInt(_index, Integer.parseInt(_entry.get(_key).toString()));
-							} catch (Exception _ex) {
-								_prepared.setNull(_index, java.sql.Types.NULL);
-							}
-						} else if (_valueType == 12) {		// VARCHAR
-							try {
-								_prepared.setString(_index, _entry.get(_key).toString());
-							} catch (Exception _ex) {
-								_prepared.setNull(_index, java.sql.Types.NULL);
-							}
-						} else if (_valueType == 16) {		// BOOLEAN
-							try {
-								_prepared.setBoolean(_index, Boolean.parseBoolean(_entry.get(_key).toString()));
-							} catch (Exception _ex) {
-								_prepared.setNull(_index, java.sql.Types.NULL);
-							}
-						} else if (_valueType == 93) {		// TIMESTAMP
-							try {
-								String _shortened = _entry.get(_key).toString().substring(0, 20);
-								Date _timestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(_shortened);
-								_prepared.setTimestamp(_index, new java.sql.Timestamp(_timestamp.getTime()));
-							} catch (Exception _ex) {
-								_prepared.setNull(_index, java.sql.Types.NULL);
-							}
-						} else if (_valueType == 8) {		// DOUBLE
-							try {
-								_prepared.setDouble(_index, Double.parseDouble(_entry.get(_key).toString()));
-							} catch (Exception _ex) {
-								_prepared.setNull(_index, java.sql.Types.NULL);
-							}
-						} else {
-							_prepared.setNull(_index, java.sql.Types.NULL);
-						}
-						_index += 1;
-					}
-					_prepared.addBatch();
-				}
-				int[] results = _prepared.executeBatch();
-				for (int x : results) {
-					if (x < 1) {
-						System.out.println("Failed insert");
+					if (!column.equals("type") && !column.isEmpty()) {
+						entry.put(column, value);
 					}
 				}
-				_prepared.close();
-				_connection.commit();
-				_connection.close();
+				
+				// if first object in file, get column names and prepare insert statement
+				String query = null;
+				SortedMap<String, Integer> columns = new TreeMap<String, Integer>();
+				if (first) {
+					query = "SELECT * FROM " + type;
+					ResultSet results = statement.executeQuery(query);
+					ResultSetMetaData resultsMetaData = results.getMetaData();
+					int numColumns = resultsMetaData.getColumnCount();
+					columns = new TreeMap<String, Integer>();
+					for (int j = 1; j <= numColumns; j += 1) {
+						columns.put(resultsMetaData.getColumnName(j), resultsMetaData.getColumnType(j));
+					}
+					query = "INSERT INTO " + type + " (";
+					for (String key : columns.keySet()) {
+						query += key + ", ";
+					}
+					query = query.substring(0, query.length() - 2);		// remove last comma
+					query += ") SELECT ";
+					for (int j = 0; j < numColumns; j += 1) {
+						query += "?, ";
+					}
+					query = query.substring(0, query.length() - 2);		// remove last comma
+					query += " WHERE NOT EXISTS (SELECT id FROM " + type + " WHERE id = '" + entry.get("id").toString() + "');";
+					prepared = this.connection.prepareStatement(query);
+					first = false;
+				}
+				
+				// assign parameter types and add batch
+				int index = 1;
+				for (String key : columns.keySet()) {
+					int valueType = columns.get(key);
+					if (valueType == -5) {				// BIGINT
+						try {
+							prepared.setInt(index, Integer.parseInt(entry.get(key).toString()));
+						} catch (Exception ex) {
+							prepared.setNull(index, java.sql.Types.NULL);
+						}
+					} else if (valueType == 12) {		// VARCHAR
+						try {
+							prepared.setString(index, entry.get(key).toString());
+						} catch (Exception ex) {
+							prepared.setNull(index, java.sql.Types.NULL);
+						}
+					} else if (valueType == 16) {		// BOOLEAN
+						try {
+							prepared.setBoolean(index, Boolean.parseBoolean(entry.get(key).toString()));
+						} catch (Exception ex) {
+							prepared.setNull(index, java.sql.Types.NULL);
+						}
+					} else if (valueType == 93) {		// TIMESTAMP
+						try {
+							String shortened = entry.get(key).toString().substring(0, 20);
+							Date timestamp = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(shortened);
+							prepared.setTimestamp(index, new java.sql.Timestamp(timestamp.getTime()));
+						} catch (Exception ex) {
+							prepared.setNull(index, java.sql.Types.NULL);
+						}
+					} else if (valueType == 8) {		// DOUBLE
+						try {
+							prepared.setDouble(index, Double.parseDouble(entry.get(key).toString()));
+						} catch (Exception ex) {
+							prepared.setNull(index, java.sql.Types.NULL);
+						}
+					} else {
+						prepared.setNull(index, java.sql.Types.NULL);
+					}
+					index += 1;
+				}
+				prepared.addBatch();
 			}
-			
-			// TODO check for and remove duplicates
-			
-		System.out.println("Done.");
-		} catch (Exception _ex) {
-			System.err.println(_ex.getClass().getName() + ": " + _ex.getMessage());
-			_ex.printStackTrace();
+			int[] results = prepared.executeBatch();
+			for (int x : results) {
+				if (x < 1) {
+					System.out.println("database:queryfailure");
+				}
+			}
+			prepared.close();
+			this.connection.commit();
+		} catch (Exception ex) {
+			handleException(ex, true);
+		}
+	}
+
+	// TODO
+	public void connectToMySQL(String server, String port, String name, String user, String password) {
+
+	}
+}
+
+
+
+
+
+
+
+////////
+// The data source to update the database from.
+////////
+
+class DataSource {
+
+	////////
+	// private members
+	////////
+
+	private AmazonS3 s3Client;
+	private String s3Bucket;
+	private int rootDirectoryCount;
+	private boolean canConnect;
+	private int totalFiles;
+	private ArrayList<String> s3Keys;
+
+	////////
+	// public methods
+	////////
+
+	public DataSource() {
+		this.s3Client = new AmazonS3Client(new ProfileCredentialsProvider());  
+		this.s3Bucket = null;
+		this.rootDirectoryCount = 0;
+		this.canConnect = false;
+		this.totalFiles = 0;
+		this.s3Keys = new ArrayList<String>();
+	}
+
+	public AmazonS3 getS3Client() {
+		return this.s3Client;
+	}
+
+	public String getS3Bucket() {
+		return this.s3Bucket;
+	}
+
+	public void setS3Bucket(String bucket) {
+		this.s3Bucket = bucket;
+	}
+
+	public ArrayList<String> getS3Keys() {
+		return this.s3Keys;
+	}
+
+	public boolean canConnect() {
+		return this.canConnect;
+	}
+
+	public int getTotalFiles() {
+		return this.totalFiles;
+	}
+
+	public static void handleException(Exception ex, boolean exit) {
+		System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
+		ex.printStackTrace();
+		if (exit)
+			System.exit(0);
+	}
+
+	public void updateS3Keys(){
+		this.s3Keys = downloadS3DirectoryKeys(this.s3Bucket);
+	}
+
+	private int s3DirectoryCount(String path) {
+		try {
+			String command = "aws s3 ls s3://" + path + "/";
+			Process process = Runtime.getRuntime().exec(command);
+			String output = null;
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+
+			int count = 0;
+
+			while ((output = bufferedReader.readLine()) != null) {
+
+				if (count == 0)
+					this.canConnect = true;
+
+				count += 1;
+			}
+ 
+			return count;
+		} catch (Exception ex) {
+			handleException(ex, false);
+			return -1;
+		}
+	}
+
+	public ArrayList<String> downloadS3DirectoryKeys(String path) {
+		ArrayList<String> keys = new ArrayList<String>();
+		try {
+			ListObjectsV2Request request = new ListObjectsV2Request().withBucketName(path);
+			ListObjectsV2Result result;
+			do {
+				result = this.s3Client.listObjectsV2(request);
+				for (S3ObjectSummary objectSummary : result.getObjectSummaries()) {
+					// skip accelerometer data for now
+					if (!objectSummary.getKey().contains("Accelerometer")) {
+						keys.add(objectSummary.getKey());
+					}
+				}
+				request.setContinuationToken(result.getNextContinuationToken());
+			} while (result.isTruncated() == true);
+		} catch (Exception ex) {
+			handleException(ex, false);
+		}
+
+		return keys;
+	}
+
+	public int s3RootDirectoryCount() {
+		this.rootDirectoryCount = s3DirectoryCount(this.s3Bucket);
+		return this.rootDirectoryCount;
+	}
+
+	public void updateS3RootDirectoryCount() {
+		this.rootDirectoryCount = s3DirectoryCount(this.s3Bucket);
+	}
+
+	public int s3SubDirectoryCount(String path) {
+		return s3DirectoryCount(this.s3Bucket + "/" + path);
+	}
+
+	public JSONArray downloadS3Object(String path) {
+		try {
+			S3Object directory = this.s3Client.getObject(new GetObjectRequest(this.s3Bucket, path));
+			InputStream objectData = directory.getObjectContent();
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			byte[] bytes = IOUtils.toByteArray(objectData);
+			String content = "";
+
+			// get the data from s3 and read it into a buffer, unzipping if it's compressed
+			if (path.contains(".gz")) {
+				try (ByteArrayInputStream bin = new ByteArrayInputStream(bytes);
+					GZIPInputStream gzipStream = new GZIPInputStream(bin))
+				{
+					byte[] buffer = new byte[1024];
+					out = new ByteArrayOutputStream();
+					int length;
+
+					while ((length = gzipStream.read(buffer)) > 0) {
+						out.write(buffer, 0, length);
+					}
+
+					gzipStream.close();	
+					out.close();
+					bytes = out.toByteArray();
+				}
+			}
+
+			return new JSONArray(new String(bytes, "UTF-8"));
+		} catch (Exception ex) {
+			handleException(ex, true);
+			return null;
 		}
 	}
 }
+

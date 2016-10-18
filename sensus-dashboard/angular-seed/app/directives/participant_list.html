@@ -1,0 +1,16 @@
+<div class="body_section inner">
+	<div class="horiz_white_menu" ng-repeat="participant in handle">
+		<div class="horiz_menu_actions">
+			<ul class="fit">
+				<li class="horiz_menu_item">
+					<font class="block_body_text">{{participant.identifier}}</font>
+				</li>
+			</ul>
+			<ul class="right_menu offset">
+				<li class="horiz_menu_item">
+					<button class="body_button" type="button" data-ng-click="goToParticipant(participant)">View</button>
+				</li>
+			</ul>
+		</div>
+	</div>
+</div>

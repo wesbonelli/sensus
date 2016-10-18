@@ -20,7 +20,7 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
-$researcherEmailAddress = $_SESSION["email_address"];
+$researcherId = $_SESSION["user_id"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -36,7 +36,7 @@ if (!$handle) {
 }
 
 // load researcher
-$query = "SELECT firstname, lastname FROM researcher WHERE emailaddress = '$researcherEmailAddress';";
+$query = "SELECT firstname, lastname, emailaddress FROM researcher WHERE id = '$researcherId';";
 $result = pg_query($handle, $query);
 if ($result) {
         $json = null;

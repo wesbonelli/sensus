@@ -1,0 +1,20 @@
+<div class="body_section inner">	
+	<div class="horiz_medium_block" ng-repeat="logEntry in handle.list | orderBy:'timestamp':true">
+		<div class="horiz_menu_actions">
+			<ul class="right_menu offset">
+				<li class="horiz_menu_item">
+					<button class="body_button " type="button" data-ng-click="$root.navToLogEntry(logEntry)">View</button>
+				</li>
+			</ul<>
+		</div>
+		<div class="block_text_area">
+			<a class="block_text" ng-bind="logEntry.timestamp | date:'MM/dd/yy HH:mm'"></a>
+			<br>
+			<a class="block_text">{{logEntry.studyTitle}}</a>
+			<br>
+			<a class="block_text">{{logEntry.participantIdentifier}}</a>
+			<br>
+			<a class="block_text">{{logEntry.message}}</a>
+		</div>
+	</div>
+</div>

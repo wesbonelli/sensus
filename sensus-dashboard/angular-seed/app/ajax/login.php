@@ -35,12 +35,13 @@ if(!get_magic_quotes_gpc()) {
 }
 
 // build query
-$query = "SELECT password FROM researcher WHERE emailaddress = '$loginEmailAddress';";
+$query = "SELECT password, id FROM useraccount WHERE emailaddress = '$loginEmailAddress';";
 
 // execute query
 $result = pg_query($handle, $query);
 
 // check return value
+$userId = null;
 if ($result) {
 	// if no rows were returned, email was incorrect
 	if (pg_num_rows($result) == 0)
@@ -49,7 +50,8 @@ if ($result) {
         else {
 		$rowArray = pg_fetch_array($result, 0, PGSQL_NUM);
 		if (password_verify($loginPassword, $rowArray[0])) {
-			echo json_encode(array('payload' => array('authenticate' => 'pass')));
+			$userId = $rowArray[1];
+			echo json_encode(array('payload' => array('authenticate' => 'pass', 'userId' => $userId)));
 		}
 		else {
 			echo json_encode(array('payload' => array('authenticate' => 'fail')));
@@ -67,10 +69,11 @@ session_start();
 
 // update session
 $_SESSION["logged_in"] = true;
-$_SESSION["email_address"] = $loginEmailAddress;
-$_SESSION["viewed_study"] = '';
-$_SESSION["viewed_participant"] = '';
-$_SESSION["viewed_logentry"] = '';
+$_SESSION["user_id"] = $userId;
+$_SESSION["user_role"] = '';
+$_SESSION["viewed_study"] = 0;
+$_SESSION["viewed_participant"] = 0;
+$_SESSION["viewed_logentry"] = 0;
 
 // close connection
 pg_close($handle);

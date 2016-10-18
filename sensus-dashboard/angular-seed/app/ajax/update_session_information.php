@@ -21,52 +21,44 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // check and set POST values
-$loggedIn = '';
-$emailAddress = '';
-$viewedStudy = '';
-$viewedParticipant = '';
-$viewedLogEntry = '';
-if (!empty($_POST['loggedIn']))
-        if(!get_magic_quotes_gpc()) {
+if (array_key_exists('logEntryId', $_POST)
+	&& array_key_exists('loggedIn', $_POST)
+	&& array_key_exists('userId', $_POST)
+	&& array_key_exists('userEmailAddress', $_POST)
+	&& array_key_exists('userRole', $_POST)
+	&& array_key_exists('studyId', $_POST)
+	&& array_key_exists('participantId', $_POST)
+	&& array_key_exists('logEntryId', $_POST)) {
+	if(!get_magic_quotes_gpc()) {
+                $logEntryId = addslashes($_POST['logEntryId']);
+                $participantId = addslashes($_POST['participantId']);
+                $studyId = addslashes($_POST['studyId']);
+                $userRole = addslashes($_POST['userRole']);
+                $userId = addslashes($_POST['userId']);
+		$userEmailAddress = addslashes($_POST['userEmailAddress']);
                 $loggedIn = addslashes($_POST['loggedIn']);
         } else {
+                $logEntryId = $_POST['logEntryId'];
+                $participantId = $_POST['participantId'];
+                $studyId = $_POST['studyId'];
+                $userRole = $_POST['userRole'];
+                $userId = $_POST['userId'];
+		$userEmailAddress = $_POST['userEmailAddress'];
                 $loggedIn = $_POST['loggedIn'];
-}
-if (!empty($_POST['emailAddress']))
-        if(!get_magic_quotes_gpc()) {
-                $emailAddress = addslashes($_POST['emailAddress']);
-        } else {
-                $emailAddress = $_POST['emailAddress'];
-}
-if (!empty($_POST['viewedStudy']))
-        if(!get_magic_quotes_gpc()) {
-                $viewedStudy = addslashes($_POST['viewedStudy']);
-        } else {
-                $viewedStudy = $_POST['viewedStudy'];
-}
-if (!empty($_POST['viewedParticipant']))
-	if(!get_magic_quotes_gpc()) {
-		$viewedParticipant = addslashes($_POST['viewedParticipant']);
-	} else {
-        	$viewedParticipant = $_POST['viewedParticipant'];
-}
-if (!empty($_POST['viewedLogEntry']))
-        if(!get_magic_quotes_gpc()) {
-                $viewedLogEntry = addslashes($_POST['viewedLogEntry']);
-        } else {
-                $viewedLogEntry = $_POST['viewedLogEntry'];
+        }
+} else {
+	$error = array('type' => 'ajax', 'message' => 'missingvalues');
+        errorReport(-1, json_encode(array('error' => $error)));
+        exit();
 }
 
 // update session
-if ($loggedIn != '')
-	$_SESSION["logged_in"] = $loggedIn;
-if ($emailAddress != '')
-	$_SESSION["email_address"] = $emailAddress;
-if ($viewedStudy != '')
-	$_SESSION["viewed_study"] = $viewedStudy;
-if ($viewedParticipant != '')
-	$_SESSION["viewed_participant"] = $viewedParticipant;
-if ($viewedLogEntry != '')
-	$_SESSION["viewed_logentry"] = $viewedLogEntry;
+$_SESSION["logged_in"] = $loggedIn;
+$_SESSION["user_id"] = $userId;
+$_SESSION["user_email_address"] = $userEmailAddress;
+$_SESSION["user_role"] = $userRole;
+$_SESSION["viewed_study"] = intval($studyId);
+$_SESSION["viewed_participant"] = intval($participantId);
+$_SESSION["viewed_logentry"] = intval($logEntryId);
 
 ?>

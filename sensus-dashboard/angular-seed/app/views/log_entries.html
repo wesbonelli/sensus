@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div style="padding-top:45px">
+		<div class="nav_section">
+			<div class="nav_menu">
+				<div class="nav_menu_actions">
+					<ul class="nav_menu_actions_cont left">
+						<li class="nav_menu_item">
+							<a class="nav_text"> &gt </a>
+						</li>
+						<li class="nav_menu_item">
+							<button class="nav_button" type="button" data-ng-click="goToStudies()">Studies</button>
+						</li>
+						<li class="nav_menu_item">
+							<a class="nav_text"> &gt </a>
+						</li>
+						<li class="nav_menu_item">
+							<button class="nav_button" type="button" data-ng-click="reload()">Log Entries</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="body_section" style="padding-top:25px;">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Log Entries</font>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner">
+				{{logEntries.message}}
+				<div class="horiz_medium_block" ng-repeat="logEntry in logEntries.list | orderBy:'timestamp'">
+					<div class="horiz_menu_actions">
+						<ul class="right_menu offset">
+							<li class="horiz_menu_item">
+								<button class="block_top_button blue_hover_top" type="button" data-ng-click="goToLogEntry(logEntry)">View</button>
+							</li>
+						</ul>
+					</div>
+					<div class="block_text_area">
+						<a class="block_text" ng-bind="logEntry.timestamp | date:'MM/dd/yy HH:mm'"></a>
+						<br>
+						<a class="block_text">Study: {{logEntry.studyTitle}}</a>
+						<br>
+						<a class="block_text">Participant: {{logEntry.participantIdentifier}}</a>
+						<br>
+						<a class="block_text">Message: {{logEntry.message}}</a>
+					</div>
+				</div>
+			</div>
+			<div class="body_section" style="height:50px;width:100%">
+                               </div>
+		</div>
+	</div>
+</body>
+</html>
+

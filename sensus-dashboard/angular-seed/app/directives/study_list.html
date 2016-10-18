@@ -1,0 +1,36 @@
+<div class="body_section inner" id="activeStudies">
+	<div class="horiz_medium_block" ng-repeat="study in handle.active">
+		<div class="horiz_menu_actions">
+			<ul class="right_menu offset">
+				<li class="horiz_menu_item">
+					<button class="body_button" type="button" data-ng-click="$root.navToStudy(study)">View</button>
+				</li>
+			</ul>
+		</div>
+		<div class="block_text_area">
+			<a class="header_text">{{study.title}}</a>
+			<br>
+                        <a class="block_text">{{study.startDate | date:"MM/dd/yy"}} - {{study.endDate | date:"MM/dd/yy"}}</a>
+			<br>
+			<a class="block_text">{{study.description}}</a>
+		</div>
+	</div>
+</div>
+<div class="body_section inner" id="inactiveStudies">
+	<div class="horiz_medium_block" ng-repeat="study in handle.inactive">
+                <div class="horiz_menu_actions">
+                        <ul class="right_menu offset">
+                                <li class="horiz_menu_item">
+                                        <button class="body_button" type="button" data-ng-click="$root.navToStudy(study)">View</button>
+                                </li>
+                        </ul>
+                </div>
+                <div class="block_text_area">
+                        <a class="header_text">{{study.title}}</a>
+			<br>
+                        <a class="block_text">{{study.startDate | date:"MM/dd/yy"}} - {{study.endDate | date:"MM/dd/yy"}}</a>
+                        <br>
+                        <a class="block_text">{{study.description}}</a>
+                </div>
+        </div>
+</div>

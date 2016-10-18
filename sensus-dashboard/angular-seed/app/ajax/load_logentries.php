@@ -21,8 +21,9 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get session information
-$studyTitle = $_SESSION["viewed_study"];
-$participantEmailAddress = $_SESSION["viewed_participant"];
+$userId = $_SESSION["user_id"];
+$studyId = $_SESSION["viewed_study"];
+$participantId = $_SESSION["viewed_participant"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -36,32 +37,126 @@ if (!$handle) {
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
-
-// load alerts
-if ($studyTitle == '' && $participantEmailAddress == '') {
-	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry;";
-} else if ($studyTitle == '') {
-	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourceparticipantemailaddress = '$participantEmailAddress';";
-} else if ($participantEmailAddress == '') {
-	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudytitle = '$studyTitle';";
-} else {
-	$query = "SELECT sourcestudytitle, sourceparticipantemailaddress, timestamp, message FROM logentry WHERE sourcestudytitle = '$studyTitle' AND sourceparticipantemailaddress = '$participantEmailAddress';";
-}
-
-$result = pg_query($handle, $query);
-if ($result) {
-	$json = array('payload' => null);
-        while ($row = pg_fetch_assoc($result)) {
-        	if ($row != null) {
-	        	$values[] = $row;
-			$json = array('payload' => $values);
+if ($studyId == 0 ) {
+	// find all the studies the user is involved with as a researcher
+	$studyIds = null;
+	$query = "SELECT * FROM researcher WHERE userid = '$userId';";
+	$result = pg_query($handle, $query);
+	if ($result) {
+		while ($row = pg_fetch_assoc($result)) {
+			if ($row != null) {
+				$studyIds[] = $row["studyid"];
+			}
 		}
-        }
-        echo json_encode($json);
+	} else {
+		$error = array('type' => 'database', 'message' => 'queryfailure');
+		errorReport(-1, json_encode(array('error' => $error)));
+	}
+
+	// find all the studies the user is involved with as a participant
+	$query = "SELECT * FROM participant WHERE userid = '$userId';";
+	$result = pg_query($handle, $query);
+	if ($result) {
+		while ($row = pg_fetch_assoc($result)) {
+			if ($row != null) {
+				$studyIds[] = $row["studyid"];
+			}
+		}
+	} else {
+		$error = array('type' => 'database', 'message' => 'queryfailure');
+		errorReport(-1, json_encode(array('error' => $error)));
+	}
+
+	// load log entries
+	$logEntries = null;
+	for ($i = 0; $i < count($studyIds); $i += 1) {
+		$id = intval($studyIds[$i]);
+		$query = "SELECT id, studyid, participantid, timestamp, message FROM logentry WHERE studyid = '$id';";
+		$result = pg_query($handle, $query);
+		if ($result) {
+			while ($row = pg_fetch_assoc($result)) {
+				if ($row != null) {
+					$logEntries[] = $row;
+				}
+			}
+		} else {
+			$error = array('type' => 'session', 'database' => 'queryfailure');
+			errorReport(-1, json_encode(array('error' => $error)));
+		}
+	}
 } else {
-	$error = array('type' => 'session', 'database' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
+	if ($participantId == '') {
+        	$query = "SELECT id, studyid, participantid, participantidentifier, timestamp, message FROM logentry WHERE studyid = '$studyId';";
+        } else {
+                $query = "SELECT id, studyid, participantid, participantidentifier, timestamp, timestamp, message FROM logentry WHERE studyid = '$studyId' AND participantid = '$participantId';";
+        }
+	$result = pg_query($handle, $query);
+	if ($result) {
+		while ($row = pg_fetch_assoc($result)) {
+			if ($row != null) {
+				$logEntries[] = $row;
+			}
+		}
+	} else {
+		$error = array('type' => 'session', 'database' => 'queryfailure');
+		errorReport(-1, json_encode(array('error' => $error)));
+	}
 }
+
+// load log entry study information
+for ($i = 0; $i < count($logEntries); $i += 1) {
+        $currentStudyId = $logEntries[$i]["studyid"];
+        $query = "SELECT title FROM study WHERE id = '$currentStudyId';";
+        $result = pg_query($handle, $query);
+        if ($result) {
+                $queryData = null;
+                while ($row = pg_fetch_assoc($result)) {
+                        if ($row != null) {
+				$logEntries[$i]["studytitle"] = $row["title"];
+                        }
+                }
+        } else {
+                $error = array('type' => 'database', 'message' => 'queryfailure');
+                errorReport(-1, json_encode(array('error' => $error)));
+        }
+}
+
+// load log entry participant information
+for ($i = 0; $i < count($logEntries); $i += 1) {
+        $currentParticipantId = $logEntries[$i]["participantid"];
+	if ($currentParticipantId != null) {
+        	$query = "SELECT userid, identifier FROM participant WHERE id = '$currentParticipantId';";
+		$result = pg_query($handle, $query);
+		if ($result) {
+			while ($row = pg_fetch_assoc($result)) {
+				if ($row != null) {
+					$logEntries[$i]["participantidentifier"] = $row["identifier"];
+				}
+			}
+			//while ($row = pg_fetch_assoc($result)) {
+			//	if ($row != null) {
+			//		$userId = intval($row["userid"]);
+			//		$query = "SELECT emailaddress FROM useraccount WHERE id = '$userId';";
+			//		$result = pg_query($handle, $query);
+			//		if ($result) {
+			//			while ($row = pg_fetch_assoc($result)) {
+			//				if ($row != null) {
+			//					$logEntries[$i]["participantemailaddress"] = $row["emailaddress"];
+			//				}
+			//			}
+			//		} else {
+			//			$error = array('type' => 'database', 'message' => 'queryfailure');
+			//			errorReport(-1, json_encode(array('error' => $error)));
+			//		}
+			//	}
+			//}
+		} else {
+			$error = array('type' => 'database', 'message' => 'queryfailure');
+			errorReport(-1, json_encode(array('error' => $error)));
+		}
+	}
+}
+echo json_encode(array('payload' => $logEntries));
 
 // close connection
 pg_close($handle);

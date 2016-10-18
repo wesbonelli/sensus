@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_section" style="padding-top:20vh">
+		<div class="body_center_box">
+			<tr>
+				<form>
+					<fieldset>
+						<p class="body_centered_element header_text">Sign In</p>
+					</fieldset>
+					<fieldset>
+						<br></br>
+						<input class="body_centered_element text_input" name="loginEmailAddress" type="text" placeholder="Email Address" size="50" ng-model="formData.loginEmailAddress"><br>
+						<input class="body_centered_element text_input" name="loginPassword" type="password" placeholder="Password" size="50" ng-model="formData.loginPassword"><br>
+					</fieldset>
+					<p width="100%" height="20px"</p>
+					<fieldset>
+						<button class="body_button" type="button" data-ng-click="submit()">Submit</button>
+					</fieldset>
+					<p width="100%" height="10px"</p>
+					<fieldset>
+                                                <button class="body_button" type="button" data-ng-click="createAccount()">Create account</button>
+                                        </fieldset>
+				</form>		
+			</tr>
+		</div>
+	</div>
+</body>
+</html>

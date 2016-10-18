@@ -20,46 +20,34 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
+// get viewed study
+$studyId = $_SESSION["viewed_study"];
+
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
 $json = json_decode($text, true);
 $pgsqlPassword = $json['ajax']['pw'];
 
-// connect to database
+// set up database connection
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        $error = array('type' => 'database', 'message' => 'connectionfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
-// check and set POST values
-$studyId;
-if (empty($_POST['studyId']))
-	$error = array('type' => 'ajax', 'message' => 'missingvalues');
+// check and get post values
+if (empty($_POST['userId'])) {
+        $error = array('type' => 'ajax', 'message' => 'missingvalues');
         errorReport(-1, json_encode(array('error' => $error)));
-if(! get_magic_quotes_gpc() ) {
-	$studyId = addslashes($_POST['studyId']);
+} else if(!get_magic_quotes_gpc()) {
+        $userId = addslashes($_POST['userId']);
 } else {
-	$studyId = $_POST['studyId'];
+        $userId = $_POST['userId'];
 }
 
-// delete study, associated participants and log entries
-$query = "DELETE FROM study WHERE id = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-	exit();
-}
-$query = "DELETE FROM participant WHERE studyid = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-        $error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-        exit();
-}
-$query = "DELETE FROM logentry WHERE studyid = '$studyId'";
+// create a log entry recording the study's creation
+$query = "INSERT INTO researcher (userid, studyid) VALUES ('$userId', '$studyId');";
 $result = pg_query($handle, $query);
 if (!$result) {
         $error = array('type' => 'database', 'message' => 'queryfailure');

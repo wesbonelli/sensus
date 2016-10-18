@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+                <div class="body_section">
+                        <div class="body_section inner">
+                                <div class="horiz_menu">
+                                        <div class="horiz_menu_actions">
+                                                <ul class="fit">
+                                                        <li class="horiz_menu_item">
+                                                                <a class="menu_text">Account details</a>
+                                                        </li>
+                                                </ul>
+                                                <ul id="displayDetailsMenu" class="right_menu fit menu_tab">
+                                                        <li class="horiz_menu_item">
+                                                                <button class="body_button blue_hover" type="button" data-ng-click="editDetails()">Edit</button>
+                                                        </li>
+                                                </ul>
+                                                <ul id="editDetailsMenu" class="right_menu fit menu_tab">
+                                                        <li class="horiz_menu_item">
+                                                                <button class="body_button blue_hover" type="button" data-ng-click="discardDetailsChanges()">Discard</button>
+                                                        </li>
+                                                        <li class="horiz_menu_item">
+                                                                <button class="body_button blue_hover" type="button" data-ng-click="saveDetailsChanges()">Save</button>
+                                                        </li>
+                                                </ul>
+                                        </div>
+                                </div>
+                                <div class="body_section inner">
+                                        <div class="horiz_auto_block">
+                                                <div id="displayDetailsSection" class="block_text_area tab">
+                                                        <a class="block_text">First name: {{user.firstName}}</a>
+                                                        <br>
+                                                        <a class="block_text">Last name: {{user.lastName}}</a>
+                                                        <br>
+                                                        <a class="block_text">Email address: {{session.userEmailAddress}}</a>
+                                                </div>
+                                                <div id="editDetailsSection" class="block_text_area tab">
+                                                        <table style="width:100%">
+                                                                <tr>
+                                                                        <td>
+                                                                                <a class="block_text">First name:</a>
+                                                                        </td>
+                                                                        <td>
+                                                                                <input class="body_centered_element text_input" name="firstName" type="text" placeholder="{{user.firstName}}" size="50" ng-model="formData.firstName">
+                                                                        </td>
+                                                                </tr>
+                                                                <tr>
+                                                                        <td>
+                                                                                <a class="block_text">Last name:</a>
+                                                                        </td>
+                                                                        <td>
+                                                                                <input class="body_centered_element text_input" name="lastName" type="text" placeholder="{{user.lastName}}" size="50" ng-model="formData.lastName">
+                                                                        </td>
+                                                                </tr>
+                                                                <tr>
+                                                                        <td>
+                                                                                <a class="block_text">Email address:</a>
+                                                                        </td>
+                                                                        <td>
+                                                                                <input class="body_centered_element text_input" name="emailAddress" placeholder="{{session.userEmailAddress}}" type="text" size="50" ng-model="formData.emailAddress">
+                                                                        </td>
+                                                                </tr>
+                                                        </table>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+		</div>
+	</div>
+</body>
+</html>

@@ -20,6 +20,8 @@ else if ($_SESSION["logged_in"] == false) {
         exit();
 }
 
+$userId = $_SESSION["user_id"];
+
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
 $json = json_decode($text, true);
@@ -28,44 +30,50 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        $error = array('type' => 'database', 'message' => 'connectionfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
-// check and set POST values
-$studyId;
-if (empty($_POST['studyId']))
-	$error = array('type' => 'ajax', 'message' => 'missingvalues');
-        errorReport(-1, json_encode(array('error' => $error)));
-if(! get_magic_quotes_gpc() ) {
-	$studyId = addslashes($_POST['studyId']);
+// get current study
+$studyId = $_SESSION["viewed_study"];
+
+// find the researcherids of all researchers with a relationship to this study
+$researcherIds = null;
+$query = "SELECT id, userid FROM researcher WHERE studyid = '$studyId';";
+$result = pg_query($handle, $query);
+if ($result) {
+	while ($row = pg_fetch_assoc($result)) {
+		if ($row != null) {
+			$researcherIds[] = $row;
+		}
+	}
+	//$json = json_encode(array('payload' => $researcherIds));
+	//echo $json;
 } else {
-	$studyId = $_POST['studyId'];
+        $error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
 }
 
-// delete study, associated participants and log entries
-$query = "DELETE FROM study WHERE id = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-	exit();
+// load the id and name of researchers found
+$json = null;
+for ($i = 0; $i < count($researcherIds); $i += 1) {
+	$currentId = $researcherIds[$i]["userid"];
+	$query = "SELECT id, firstname, lastname FROM useraccount where id = '$currentId';";
+	$result = pg_query($handle, $query);
+	if ($result) {
+		$queryData = null;
+		while ($row = pg_fetch_assoc($result)) {
+			if ($row != null) {
+				$researchers[] = $row;
+			}
+		}
+	} else {
+		$error = array('type' => 'database', 'message' => 'queryfailure');
+		errorReport(-1, json_encode(array('error' => $error)));
+	}
 }
-$query = "DELETE FROM participant WHERE studyid = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-        $error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-        exit();
-}
-$query = "DELETE FROM logentry WHERE studyid = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-        $error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-        exit();
-}
+echo json_encode(array('payload' => $researchers));
 
 // close connection
 pg_close($handle);

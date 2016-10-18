@@ -1,6 +1,6 @@
 <?php
 
-header('Access-Control-Allow-Origin: http://ec2-54-227-229-48.compute-1.amazonaws.com/app/*');
+header('Access-Control-Allow-Origin: http://ec2-54-227-229-48.compute-1.amazonaws.com/*');
 ini_set('display_errors', 1);
 include('app.php');
 set_error_handler('errorReport');
@@ -21,10 +21,10 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // update session
-$_SESSION["viewed_participant"] = '';
+$_SESSION["viewed_participant"] = 0;
 
 // get viewed study
-$viewedStudy = $_SESSION["viewed_study"];
+$studyId = $_SESSION["viewed_study"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -39,22 +39,42 @@ if (!$handle) {
         exit();
 }
 
-// load participant
-$query = "SELECT emailaddress, startdate, enddate FROM participant WHERE studytitle = '$viewedStudy';";
+// load participants
+$query = "SELECT id, identifier, studyid, userid, startdate, enddate FROM participant WHERE studyid = '$studyId';";
 $result = pg_query($handle, $query);
+$participants = null;
+//$participantIds = null;
 if ($result) {
-	$json = array('payload' => null);
         while ($row = pg_fetch_assoc($result)) {
         	if ($row != null) {
-			$values[] = $row;
-                        $json = array('payload' => $values);
+			//$participantIds[] = $row;
+			$participants[] = $row;
 		}
 	}
-        echo json_encode($json);
 } else {
 	$error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
 }
+
+// TODO get participant email address if participants are not anonymized
+//for ($i = 0; $i < count($participants); $i += 1) {
+//	$userId = $participants[$i]["userid"];
+        //$currentParticipantId = $participantIds[$i]["studyid"];
+//        $query = "SELECT emailaddress FROM useraccount WHERE id = '$userId';";
+//        $result = pg_query($handle, $query);
+//        if ($result) {
+//                $queryData = null;
+//                while ($row = pg_fetch_assoc($result)) {
+//                        if ($row != null) {
+//                                $participants[$i]["emailaddress"] = $row["emailaddress"];
+//                        }
+//                }
+//        } else {
+//                $error = array('type' => 'database', 'message' => 'queryfailure');
+//                errorReport(-1, json_encode(array('error' => $error)));
+//        }
+//}
+echo json_encode(array('payload' => $participants));
 
 // close connection
 pg_close($handle);

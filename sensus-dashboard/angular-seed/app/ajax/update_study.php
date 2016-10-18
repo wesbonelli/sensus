@@ -21,7 +21,7 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get current study
-$viewedStudyTitle = $_SESSION["viewed_study"];
+$studyId = $_SESSION["viewed_study"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -37,6 +37,22 @@ if (!$handle) {
 }
 
 // for each POST value we have, update the database
+if (!empty($_POST['studyStartDate'])) {
+        if(!get_magic_quotes_gpc()) {
+                $studyStartDate = addslashes($_POST['studyStartDate']);
+        } else {
+                $studyStartDate = $_POST['studyStartDate'];
+        }
+        // build query
+        $query = "UPDATE study SET startdate = '$studyStartDate' WHERE id = '$studyId';";
+        // execute query
+        $result = pg_query($handle, $query);
+        if (!$result) {
+                $error = array('type' => 'database', 'message' => 'queryfailure');
+                errorReport(-1, json_encode(array('error' => $error)));
+                exit();
+        }
+}
 if (!empty($_POST['studyEndDate'])) {
 	if(!get_magic_quotes_gpc()) {
                 $studyEndDate = addslashes($_POST['studyEndDate']);
@@ -44,7 +60,7 @@ if (!empty($_POST['studyEndDate'])) {
                 $studyEndDate = $_POST['studyEndDate'];
         }
 	// build query
-	$query = "UPDATE study SET enddate = '$studyEndDate' WHERE title = '$viewedStudyTitle';";
+	$query = "UPDATE study SET enddate = '$studyEndDate' WHERE id = '$studyId';";
 	// execute query
 	$result = pg_query($handle, $query);
 	if (!$result) {
@@ -60,7 +76,7 @@ if (!empty($_POST['studyDescription'])) {
                 $studyDescription = $_POST['studyDescription'];
         }
 	// build query
-	$query = "UPDATE study SET description = '$studyDescription' WHERE title = '$viewedStudyTitle';";
+	$query = "UPDATE study SET description = '$studyDescription' WHERE id = '$studyId';";
 	// execute query
 	$result = pg_query($handle, $query);
 	if (!$result) {
@@ -77,22 +93,8 @@ if (!empty($_POST['studyTitle'])) {
         } 
         // update session 
         $_SESSION["viewed_study"] = $studyTitle; 
-        // update tabe
-        $query = "UPDATE participant SET studytitle = '$studyTitle' WHERE studytitle = '$viewedStudyTitle';";
-        $result = pg_query($handle, $query);
-	if (!$result) {
-                $error = array('type' => 'database', 'message' => 'queryfailure');
-                errorReport(-1, json_encode(array('error' => $error)));
-                exit();
-        }
-        $query = "UPDATE logentry SET sourcestudytitle = '$studyTitle' WHERE sourcestudytitle = '$viewedStudyTitle';";
-        $result = pg_query($handle, $query);
-	if (!$result) {
-                $error = array('type' => 'database', 'message' => 'queryfailure');
-                errorReport(-1, json_encode(array('error' => $error)));
-                exit();
-        }
-	$query = "UPDATE study SET title = '$studyTitle' WHERE title = '$viewedStudyTitle';"; 
+        // update db
+	$query = "UPDATE study SET title = '$studyTitle' WHERE id = '$studyId';"; 
         $result = pg_query($handle, $query); 
         if (!$result) { 
                 $error = array('type' => 'database', 'message' => 'queryfailure'); 

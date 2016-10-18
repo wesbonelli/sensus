@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_section" style="padding-top:20vh">
+		<div class="body_center_box">
+			<tr>
+				<form>
+					<fieldset>
+                                                <p class="body_centered_element header_text">Create Account</p>
+                                        </fieldset>
+					<fieldset>
+						<br></br>
+						<input class="body_centered_element text_input" name="firstName" type="text" size="50" placeholder="First Name" ng-model="formData.firstName"><br>
+						<input class="body_centered_element text_input" name="lastName" type="text" size="50" placeholder="Last Name" ng-model="formData.lastName"><br>
+						<input class="body_centered_element text_input" name="emailAddress" type="text" size="50" placeholder="Email Address" ng-model="formData.emailAddress"><br>
+						<input class="body_centered_element text_input" name="password" type="password" size="50" placeholder="Password" ng-model="formData.password"><br>
+					</fieldset>
+					<p width="100%" height="10px"</p>
+					<fieldset>
+						<button class="body_button" type="button" data-ng-click="submit()">Submit</button>
+					</fieldset>
+					<p width="100%" height="10px"</p>
+                                        <fieldset>
+						<button class="body_button" type="button" data-ng-click="cancel()">Cancel</button>
+                                        </fieldset>
+				</form>
+			</tr>
+		</div>
+	</div>
+</body>
+</html>

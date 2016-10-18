@@ -28,38 +28,23 @@ $pgsqlPassword = $json['ajax']['pw'];
 // connect to database
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
-	$error = array('type' => 'database', 'message' => 'connectionfailure');
+        $error = array('type' => 'database', 'message' => 'connectionfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
 
-// check and set POST values
-$studyId;
-if (empty($_POST['studyId']))
-	$error = array('type' => 'ajax', 'message' => 'missingvalues');
-        errorReport(-1, json_encode(array('error' => $error)));
-if(! get_magic_quotes_gpc() ) {
-	$studyId = addslashes($_POST['studyId']);
-} else {
-	$studyId = $_POST['studyId'];
-}
+// get viewed participant from session
+$participantId = $_SESSION["viewed_participant"];
 
-// delete study, associated participants and log entries
-$query = "DELETE FROM study WHERE id = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-	exit();
-}
-$query = "DELETE FROM participant WHERE studyid = '$studyId'";
+// delete participant and associated log entries
+$query = "DELETE FROM participant WHERE id = '$participantId'";
 $result = pg_query($handle, $query);
 if (!$result) {
         $error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
-$query = "DELETE FROM logentry WHERE studyid = '$studyId'";
+$query = "DELETE FROM logentry WHERE participantid = '$participantId'";
 $result = pg_query($handle, $query);
 if (!$result) {
         $error = array('type' => 'database', 'message' => 'queryfailure');

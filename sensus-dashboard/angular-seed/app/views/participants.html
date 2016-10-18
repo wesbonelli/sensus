@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+		<div class="body_section inner">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Active</font>
+						</li>
+					</ul>
+					<ul class="offset">
+						<li class="horiz_menu_item" style="padding-right:70px">
+                                                        <button class="body_button dropdown_button" type="button" data-ng-click="showHideFilterMenu()">Filter: {{filterText}}</button>
+                                                        <div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="filterOptions">
+                                                                <a href="" ng-repeat="option in filterTextOptions" data-ng-click="setFilter(option)">{{option}}</a>
+                                                        </div>
+                                                </li>
+					</ul>
+					<ul class="right_menu">
+						<li class="horiz_menu_item">
+							<button class="body_button" type="button" data-ng-click="refreshFilterData()">Refresh</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div ng-attr-id="{{'AllPlot'}}" class="horiz_auto_block" style="padding-top:5px;margin-top:8px;display:none;width:100%;">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item" style="padding-right:50px">
+							<font class="block_body_text">All</font>
+						</li>
+					</ul>
+					<ul class="offset" id="ScriptPlotOptions">
+						<li class="horiz_menu_item" style="padding-right:70px">
+							<button class="body_button dropdown_button" type="button" data-ng-click="showHideScriptFilterMenu()">Response rate w/ respect to: {{scriptFilterMenuText}}</button>
+							<div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="scriptFilterOptions">
+								<a href="" ng-repeat="option in scriptFilterMenuTextOptions" data-ng-click="setScriptFilter(option)">{{option}}</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+				<div ng-attr-id="{{filterText + 'Plot'}}" style="width:80vw;padding-left:50px;padding-top:20px;padding-bottom:20px;height:1000px;z-index:50;"></div>
+			</div>
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="offset">
+						<li class="horiz_menu_item block_text none" style="padding-top:2px;padding-left:70px;width:150px;">
+							<b>Identifier</b>
+						</li>
+					</ul>
+					<ul class="offset">
+                                                <li class="horiz_menu_item block_text none" style="padding-top:2px;width:250px;">
+                                                        <b>Most recent datum received</b>
+                                                </li>
+                                                <li class="horiz_menu_item block_text none" style="padding-top:2px;width:350px;">
+                                                        <b>Script response rate (Completed / Confirmed Run)</b>
+                                                </li>
+                                                <li class="horiz_menu_item block_text none" style="padding-top:2px;width:300px;">
+                                                        <b>Script response rate (Completed / Ideal)</b>
+                                                </li>
+                                        </ul>
+				</div>
+			</div>
+			<div class="horiz_white_menu" ng-repeat="participant in participants.registered.active | orderBy:'endDate' track by $index">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+                                                <li class="horiz_menu_item">
+                                                        <button class="body_button" type="button" data-ng-click="navToParticipant(participant)">View</button>
+                                                </li>
+                                        </ul>
+					<ul class="offset">
+						<li class="horiz_menu_item" style="padding-right:10px;padding-left:30px;width:150px;">
+							<font class="block_body_text">{{participant.identifier}}</font>
+						</li>
+					</ul>
+					<ul class="offset">
+						<li class="horiz_menu_item block_text none" style="padding-top:2px;width:250px;">
+							<a>{{participant.mostRecentDatum.timestamp | date:"MM/dd/yyyy HH:mm"}}</a>
+						</li>
+						<li class="horiz_menu_item block_text none" style="padding-top:2px;width:350px;">
+							<a>{{participant.overallScriptResponseRate > 1.0 ? 1.0 : participant.overallScriptResponseRate | number:2}}</a>
+						</li>
+						<li class="horiz_menu_item block_text none" style="padding-top:2px;width:300px;">
+							<a>{{participant.overallDesiredScriptResponseRate > 1.0 ? 1.0 : participant.overallDesiredScriptResponseRate | number:2}}</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div class="body_section inner">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Inactive</font>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="horiz_white_menu" ng-repeat="participant in participants.registered.inactive | orderBy:'endDate'">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<!--<li class="horiz_menu_item">
+							<li class="horiz_menu_item"><svg class="small_rectangle" ng-style="{'background-color':participant.color}"></svg></li>
+						</li>-->
+						<li class="horiz_menu_item" style="padding-top:2px;">
+							<font class="block_body_text">{{participant.identifier}}</font>
+						</li>
+					</ul>
+					<ul class="right_menu offset">
+						<li class="horiz_menu_item">
+							 <button class="body_button" type="button" data-ng-click="navToParticipant(participant)">View</button>
+						</li>
+					</ul>
+				</ul>
+			</div>
+		</div>
+		<div class="body_section inner">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="menu_text">Unregistered</font>
+						</li>
+						<li class="horiz_menu_item">
+							<button class="body_button" type="button" data-ng-click="refreshUnregisteredParticipants()">Refresh</button>
+						</li>
+					</ul>
+					<ul class="right_menu fit">
+						<li class="horiz_menu_item">
+                                                        <button class="body_button" type="button" data-ng-click="registerAllParticipants()">Register All</button>
+                                                </li>
+					</ul>
+				</div>
+			</div>
+			<div class="horiz_white_menu" ng-repeat="participant in participants.unregistered">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<font class="block_body_text">{{participant.identifier}}</font>
+						</li>
+					</ul>
+					<ul class="right_menu fit">
+						<li class="horiz_menu_item unregistered_participant_tab">
+							<button class="body_button" type="button" data-ng-click="registerParticipant(participant)">Register</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</div>
+		<div style="padding-top:30px"></div>
+	</div>
+</body>
+</html>

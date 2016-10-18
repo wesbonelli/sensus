@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+		<div class="body_section" style="float:right;width:39.5%">
+                        <div class="horiz_menu">
+                                <div class="horiz_menu_actions">
+                                        <ul>
+                                                <li class="horiz_menu_item">
+                                                        <font class="menu_text">Log</font>
+                                                </li>
+                                        </ul>
+                                        <ul class="right_menu">
+                                                <li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="refreshLogEntries()">Refresh</button>
+                                                </li>
+                                                <li class="horiz_menu_item"><button class="body_button blue_hover" type="button" data-ng-click="navToLogEntries()">View all</button>
+                                                </li>
+                                        </ul>
+                                </div>
+                        </div>
+                        <div class="body_section inner vertical_scroll_container_white" style="height:90vh">
+				<logentrylist handle="logEntries"></logentrylist>
+                        </div>
+                        <div class="horiz_menu">
+                                <div class="horiz_menu_actions"></div>
+                        </div>
+                </div>
+		<div class="body_section" style="width:60%">
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<a class="outer_menu_text">Your Studies</a>
+						</li>
+					</ul>
+					<ul class="fit">
+                                                <li class="horiz_menu_item" style="padding-right:10px">
+                                                        <button class="dropdown_button" type="button" data-ng-click="toggleUserRoleMenu()">{{session.userRole}}</button>
+                                                        <div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="userRoleMenu">
+								<a href="" data-ng-click="selectAdministratorRole()">Administrator</a>
+                                                		<a href="" data-ng-click="selectParticipantRole()">Participant</a>
+                                                        </div>
+                                                </li>
+                                        </ul>
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<button class="dropdown_button" type="button" data-ng-click="toggleStudiesFilterMenu()">{{studiesFilterMenuText}}</button>
+							<div class="dropdown_content scroll_container tab" style="max-height:300px;max-width:200px;display:none;" id="studiesFilterMenu">
+								<a href="" data-ng-click="selectActiveStudies()">Active</a>
+								<a href="" data-ng-click="selectInactiveStudies()">Inactive</a>
+							</div>
+						</li>
+					</ul>
+					<ul class="right_menu">
+						<li class="horiz_menu_item">
+							<button class="body_button" type="button" data-ng-click="navToStudyDrafts()">Saved drafts</button>
+						</li>
+						<li class="horiz_menu_item">
+							<button class="body_button" type="button" data-ng-click="navToCreateStudy()">New study</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<studylist handle="administratorStudies" id="administratorStudies"></studylist>
+			<studylist handle="participantStudies" id="participantStudies"></studylist>
+		</div>
+	</div>
+</body>
+</html>
+
+

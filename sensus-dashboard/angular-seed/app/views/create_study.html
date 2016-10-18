@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<body>
+	<div class="body_container">
+		<div class="body_section inner">	
+			<div class="horiz_menu">
+				<div class="horiz_menu_actions">
+					<ul class="fit">
+						<li class="horiz_menu_item">
+							<a class="menu_text">Create New Study</a>
+						</li>
+					</ul>
+					<ul class="right_menu fit">
+						<li class="horiz_menu_item">
+							<button class="body_button blue_hover" type="button" data-ng-click="goToStudies()">Discard</button>
+						</li>
+						<li class="horiz_menu_item">
+							<button class="body_button blue_hover" type="button" data-ng-click="saveStudy()">Save</button>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="body_section inner">
+				<div class="horiz_auto_block">
+					<div class="horiz_menu_actions">
+						<ul class="offset">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="detailsTab()">Details</button>
+							</li>
+							<li class="nav_menu_item">
+								<button class="disabled_button" type="button"> &gt </a>
+							</li>
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="distributionTab()">Distribution</button>
+							</li>
+							<li class="nav_menu_item">
+								<button class="disabled_button" type="button"> &gt </a>
+							</li>
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="reviewTab()">Review</button>
+							</li>
+						</ul>
+						<ul class="right_menu offset">
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="back()">Back</button>
+							</li>
+							<li class="horiz_menu_item">
+								<button class="body_button" type="button" data-ng-click="submit()">{{tab.submitText}}</button>
+							</li>
+						</ul>
+					</div>
+					<br>
+					<div id="details" class="block_text_area tab">
+						<div class="body_section inner">
+							<div class="horiz_menu" style="background-color:white">
+								<div class="horiz_menu_actions">
+									<ul class="fit">
+										<li class="horiz_menu_item">
+											<a class="menu_text">Details</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+							<br>
+							<div class="body_section inner">
+								<input class="body_centered_element text_input" name="studyTitle" type="text" placeholder="Title" size="50" ng-model="formData.studyTitle"><br>
+								<input class="body_centered_element text_input" name="studyStartDate" type="text" placeholder="Date beginning" size="50" ng-model="formData.studyStartDate" jqdatepicker><br>
+								<input class="body_centered_element text_input" name="studyEndDate" type="text" placeholder="Date ending (optional)" size="50" ng-model="formData.studyEndDate" jqdatepicker><br>
+								<textarea class="body_centered_element" name="studyDescription" cols="48" rows="8" placeholder="Description" ng-model="formData.studyDescription"></textarea>
+							</div>
+						</div>
+					</div>
+					<div id="distribution" class="block_text_area tab">
+						<div class="body_section inner">
+                                                        <div class="horiz_menu" style="background-color:white">
+                                                                <div class="horiz_menu_actions">
+                                                                        <ul class="fit">
+                                                                                <li class="horiz_menu_item">
+                                                                                        <a class="menu_text">Distribution</a>
+                                                                                </li>
+                                                                        </ul>
+                                                                </div>
+                                                        </div>
+                                                        <br>
+							<div class="body_section inner">
+								<button class="edit_button" type="button" data-ng-click="showHideDataSourceMenu()">Data source: {{formData.dataSourceType}}</button>
+								<ul id="dataSourceMenu" style="display:none">
+									<li><button class="body_button" type="button" data-ng-click="setS3DataSource()">Amazon S3</button></li>
+								</ul>
+								<br>
+								<div id="S3DetailsTab" class="body_section inner">
+									<input class="body_centered_element text_input" name="s3Bucket" type="text" placeholder="Bucket" size="50" ng-model="formData.s3Bucket">
+								</div>
+								<br>
+								<button class="edit_button" type="button" data-ng-click="showHideDatabaseMenu()">Database: {{formData.databaseType}}</button>
+								<ul id="databaseMenu"  style="display:none">
+									<li><button class="body_button" type="button" data-ng-click="setPostgreSQLDatabase()">PostgreSQL</button></li>
+								</ul>
+								<br>
+								<div id="PostgreSQLDetailsTab" class="body_section inner">
+									<input class="body_centered_element text_input" name="postgreSQLHost" type="text" placeholder="Host" size="50" ng-model="formData.postgreSQLHost"><br> 
+									<input class="body_centered_element text_input" name="postgreSQLPort" type="text" placeholder="Port" size="50" ng-model="formData.postgreSQLPort"><br>
+									<input class="body_centered_element text_input" name="postgreSQLName" type="text" placeholder="Name" size="50" ng-model="formData.postgreSQLName"><br>
+									<input class="body_centered_element text_input" name="postgreSQLUser" type="text" placeholder="User" size="50" ng-model="formData.postgreSQLUser"><br>
+									<input class="body_centered_element text_input" name="postgreSQLPassword" type="text" placeholder="Password" size="50" ng-model="formData.postgreSQLPassword"><br>           
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="review" class="block_text_area tab">
+						<div class="body_section inner">
+                                                        <div class="horiz_menu" style="background-color:white">
+                                                                <div class="horiz_menu_actions">
+                                                                        <ul class="fit">
+                                                                                <li class="horiz_menu_item">
+                                                                                        <a class="menu_text">Review</a>
+                                                                                </li>
+                                                                        </ul>
+                                                                </div>
+                                                        </div>
+                                                        <br>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

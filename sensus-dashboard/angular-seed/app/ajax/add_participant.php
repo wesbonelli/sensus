@@ -25,7 +25,7 @@ $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
 $json = json_decode($text, true);
 $pgsqlPassword = $json['ajax']['pw'];
 
-// connect to database
+// set up database connection
 $handle = pg_connect("host = sensus.cq86dmznaris.us-east-1.rds.amazonaws.com port = 5432 dbname = sensus_portal user = ajax password = $pgsqlPassword");
 if (!$handle) {
 	$error = array('type' => 'database', 'message' => 'connectionfailure');
@@ -33,33 +33,61 @@ if (!$handle) {
         exit();
 }
 
-// check and set POST values
-$studyId;
-if (empty($_POST['studyId']))
+// check and get post values
+if (empty($_POST['identifier']) || empty($_POST['startDate'])) {
 	$error = array('type' => 'ajax', 'message' => 'missingvalues');
         errorReport(-1, json_encode(array('error' => $error)));
-if(! get_magic_quotes_gpc() ) {
-	$studyId = addslashes($_POST['studyId']);
+	exit();
 } else {
-	$studyId = $_POST['studyId'];
+	if(!get_magic_quotes_gpc()) {
+		$identifier = addslashes($_POST['identifier']);
+		$startDate = addslashes($_POST['startDate']);
+		$endDate = addslashes($_POST['endDate']);
+	} else {
+		$identifier = $_POST['identifier'];
+		$startDate = $_POST['startDate'];
+		$endDate = $_POST['endDate'];
+	}
 }
 
-// delete study, associated participants and log entries
-$query = "DELETE FROM study WHERE id = '$studyId'";
-$result = pg_query($handle, $query);
-if (!$result) {
-	$error = array('type' => 'database', 'message' => 'queryfailure');
-        errorReport(-1, json_encode(array('error' => $error)));
-	exit();
-}
-$query = "DELETE FROM participant WHERE studyid = '$studyId'";
+// get study title and id
+$studyId = $_SESSION["viewed_study"];
+$query = "SELECT title FROM study WHERE id = '$studyId';";
 $result = pg_query($handle, $query);
 if (!$result) {
         $error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
         exit();
 }
-$query = "DELETE FROM logentry WHERE studyid = '$studyId'";
+$row = pg_fetch_assoc($result);
+$studyTitle = $row['title'];
+
+// create participant
+if (empty($_POST['endDate'])) {
+	$query = "INSERT INTO participant (identifier, startdate, studyid) VALUES ('$identifier', '$startDate', '$studyId');";
+} else {
+	$query = "INSERT INTO participant (identifier, startdate, enddate, studyid) VALUES ('$identifier', '$startDate', '$endDate', '$studyId');";
+}
+$result = pg_query($handle, $query);
+if (!$result) {
+	$error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
+	exit();
+}
+
+// get auto-generated id associated with participant
+$query = "SELECT LASTVAL();";
+$result = pg_query($handle, $query);
+if (!$result) {
+        $error = array('type' => 'database', 'message' => 'queryfailure');
+        errorReport(-1, json_encode(array('error' => $error)));
+        exit();
+}
+$row = pg_fetch_assoc($result);
+$participantId = intval($row['lastval']);
+
+// create a log entry recording the event
+$query = "INSERT INTO logentry (studyid, participantid, timestamp, message) VALUES ('$studyId', '$participantId', now(), 'Participant added: $identifier.');";
 $result = pg_query($handle, $query);
 if (!$result) {
         $error = array('type' => 'database', 'message' => 'queryfailure');

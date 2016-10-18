@@ -21,7 +21,7 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get viewed study from session
-$studyTitle = $_SESSION["viewed_study"];
+$studyId = intval($_SESSION["viewed_study"]);
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -37,7 +37,7 @@ if (!$handle) {
 }
 
 // load study
-$query = "SELECT title, startdate, enddate, description FROM study WHERE title = '$studyTitle';";
+$query = "SELECT title, startdate, enddate, description, datastoragetype, databasetype  FROM study WHERE id = '$studyId';";
 $result = pg_query($handle, $query);
 if ($result) {
 	$json = null;

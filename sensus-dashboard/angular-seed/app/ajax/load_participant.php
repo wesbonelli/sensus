@@ -21,8 +21,8 @@ else if ($_SESSION["logged_in"] == false) {
 }
 
 // get viewed study and participant from session
-$studyTitle = $_SESSION["viewed_study"];
-$participantEmailAddress = $_SESSION["viewed_participant"];
+$studyId = $_SESSION["viewed_study"];
+$participantId = $_SESSION["viewed_participant"];
 
 // get database password
 $text = file_get_contents('/pgsql-roles/pgsql_roles.json');
@@ -37,21 +37,21 @@ if (!$handle) {
         exit();
 }
 
-// load participant
-$query = "SELECT id, startdate, enddate FROM participant WHERE studytitle = '$studyTitle' AND emailaddress = '$participantEmailAddress';";
+// load participant info
+$query = "SELECT id, identifier, deviceid, studyid, userid, startdate, enddate FROM participant WHERE studyid = '$studyId' AND id = '$participantId';";
 $result = pg_query($handle, $query);
+$participant = null;
 if ($result) {
-        $json = null;
-        while ($row = pg_fetch_assoc($result))
+        while ($row = pg_fetch_assoc($result)) {
                 if ($row != null) {
-                        $values[] = $row;
-                        $json = array('payload' => $values);
+                        $participant = $row;
                 }
-        echo json_encode($json);
+        }
 } else {
         $error = array('type' => 'database', 'message' => 'queryfailure');
         errorReport(-1, json_encode(array('error' => $error)));
 }
+echo json_encode(array('payload' => $participant));
 
 // close connection
 pg_close($handle);
