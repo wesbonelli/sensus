@@ -435,16 +435,22 @@ namespace Sensus.iOS
                     }
                 }
 
+                
+
                 // if the message is not null, then schedule the notification.
                 if (message != null)
                 {
-                    UILocalNotification notification = new UILocalNotification
-                    {
-                        AlertTitle = "Sensus",
-                        AlertBody = message,
-                        FireDate = DateTime.UtcNow.ToNSDate(),
-                        UserInfo = new NSDictionary(NOTIFICATION_ID_KEY, id)
+                    var notification = new UILocalNotification
+                    {                        
+                        AlertBody  = message,
+                        FireDate   = DateTime.UtcNow.ToNSDate(),
+                        UserInfo   = new NSDictionary(NOTIFICATION_ID_KEY, id)
                     };
+
+                    if (UIDevice.CurrentDevice.CheckSystemVersion(8, 2))
+                    {
+                        notification.AlertTitle = "Sensus";
+                    }
 
                     if (playSound)
                         notification.SoundName = UILocalNotification.DefaultSoundName;
